@@ -1,9 +1,12 @@
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
-
+#include "game.h"
 #include <fstream>
 #include <sstream>
 #include <string>
+
+
+
 
 std::string ReadFile(const std::string& path) {
 	std::ifstream file(path);
@@ -74,6 +77,8 @@ int main() {
 	glViewport(0, 0, 800, 600);
 	glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
 
+	Game game;
+
 	unsigned int program = CreateShaderProgram("shaders/basic.vert", "shaders/basic.frag");
 
 	float vertices[] = {
@@ -98,11 +103,17 @@ int main() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
+
+	float lastTime = (float)glfwGetTime();
 	while (!glfwWindowShouldClose(window)) {
+		float curTime = (float)glfwGetTime();
+		float deltaTime = curTime - lastTime;
+		lastTime = curTime;
+
 		glfwPollEvents();
 
 		//tick
-
+		game.Tick(deltaTime);
 
 		glClear(GL_COLOR_BUFFER_BIT);
 

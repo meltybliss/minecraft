@@ -3,6 +3,7 @@
 #include <memory>
 #include <unordered_map>
 #include <stdint.h>
+#include <cmath>
 class World {
 public:
 	World();
@@ -22,3 +23,5 @@ private:
 	}
 
 };
+
+extern World* gWorld;
