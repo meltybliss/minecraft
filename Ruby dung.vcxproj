@@ -136,6 +136,7 @@
     <ClCompile Include="src\chunk.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\world.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\block.h" />
@@ -144,6 +145,7 @@
     <ClInclude Include="include\GLFW\glfw3.h" />
     <ClInclude Include="include\GLFW\glfw3native.h" />
     <ClInclude Include="include\KHR\khrplatform.h" />
+    <ClInclude Include="include\world.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\basic.frag" />
