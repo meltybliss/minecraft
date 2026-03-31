@@ -1,5 +1,7 @@
 #include "game.h"
 
+Game* gGame = nullptr;
+
 Game::Game() {
 	gGame = this;
 	cam.UpdateVectors();

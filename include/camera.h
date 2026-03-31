@@ -1,6 +1,7 @@
 #pragma once
 #include <cmath>
-
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
 struct Vec3 {
 	float x, y, z;
 
@@ -83,3 +84,6 @@ struct Camera {
 
 
 };
+
+void UpdateCameraMovement(GLFWwindow* window, Camera& cam, float deltaTime);
+void MouseCallback(GLFWwindow* window, double xpos, double ypos);

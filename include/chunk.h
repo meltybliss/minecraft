@@ -22,7 +22,7 @@ struct Chunk {
 	static constexpr int CHUNK_WIDTH = 16;
 	static constexpr int CHUNK_SIZE = CHUNK_HEIGHT * CHUNK_WIDTH * CHUNK_WIDTH;
 
-	unsigned int blocks[CHUNK_SIZE];
+	unsigned int blocks[CHUNK_SIZE]{};
 
 	std::vector<float> vertices;
 	unsigned int vao, vbo = 0;

@@ -1,5 +1,8 @@
 #include "world.h"
 #include "game.h"
+
+World* gWorld = nullptr;
+
 World::World() {
 	gWorld = this;
 }
