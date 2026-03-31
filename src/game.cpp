@@ -6,7 +6,7 @@ Game::Game() {
 
 	glfwSetWindowUserPointer(glfwGetCurrentContext(), &cam);
 	glfwSetCursorPosCallback(glfwGetCurrentContext(), MouseCallback);
-	glfwGetInputMode(glfwGetCurrentContext(), GLFW_CURSOR);
+	glfwSetInputMode(glfwGetCurrentContext(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 void Game::Tick(float deltaTime) {

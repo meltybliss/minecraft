@@ -11,8 +11,8 @@ void World::Tick() {
 	int32_t curCz = static_cast<int32_t>(std::floor(pos.z / (Chunk::CHUNK_WIDTH)));
 
 
-	for (int32_t x = curCx - RENDER_DISTANCE; x < curCx + RENDER_DISTANCE; x++) {
-		for (int32_t z = curCz - RENDER_DISTANCE; z < curCz + RENDER_DISTANCE; z++) {
+	for (int32_t x = curCx - RENDER_DISTANCE; x <= curCx + RENDER_DISTANCE; x++) {
+		for (int32_t z = curCz - RENDER_DISTANCE; z <= curCz + RENDER_DISTANCE; z++) {
 			uint64_t key = GetChunkKey(x, z);
 			if (Chunks.find(key) == Chunks.end()) {
 

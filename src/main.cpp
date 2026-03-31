@@ -4,7 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-
+#include "Mat4.h"
 
 
 
@@ -74,6 +74,8 @@ int main() {
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
+	glEnable(GL_DEPTH_TEST);
+
 	glViewport(0, 0, 800, 600);
 	glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
 
@@ -81,27 +83,7 @@ int main() {
 
 	unsigned int program = CreateShaderProgram("shaders/basic.vert", "shaders/basic.frag");
 
-	float vertices[] = {
-	 0.0f,  0.5f,
-	-0.5f, -0.5f,
-	 0.5f, -0.5f
-	};
-
-	unsigned int VBO, VAO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// location = 0 ÇÃ aPos Ç…ÅA2å¬Ç∏Ç¬ float ÇìnÇ∑
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	
 
 
 	float lastTime = (float)glfwGetTime();
@@ -115,12 +97,25 @@ int main() {
 		//tick
 		game.Tick(deltaTime);
 
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//openGl draw
 		glUseProgram(program);
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		Vec3 eye = game.cam.pos;
+		Vec3 center = game.cam.pos + game.cam.forward;
+		
+		Mat4 view = LookAt(eye, center, game.cam.up);
+		Mat4 proj = Perspective(70.0f, 800.0f / 600.0f, 0.1f, 1000.0f);
+
+		int viewLoc = glGetUniformLocation(program, "uView");
+		int projLoc = glGetUniformLocation(program, "uProj");
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.m);
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, proj.m);
+
+
+		game.Render();
 
 		glfwSwapBuffers(window);
 

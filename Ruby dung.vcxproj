@@ -149,6 +149,7 @@
     <ClInclude Include="include\GLFW\glfw3.h" />
     <ClInclude Include="include\GLFW\glfw3native.h" />
     <ClInclude Include="include\KHR\khrplatform.h" />
+    <ClInclude Include="include\Mat4.h" />
     <ClInclude Include="include\world.h" />
   </ItemGroup>
   <ItemGroup>

@@ -26,7 +26,7 @@ void Chunk::generate() {
 			for (int x = 0; x < CHUNK_WIDTH; x++) {
 				BlockType b = BlockType::AIR;
 
-				static int ground = CHUNK_HEIGHT / 2;
+				int ground = CHUNK_HEIGHT / 2;
 
 				if (y == ground) {
 					b = BlockType::Grass;
