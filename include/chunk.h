@@ -1,6 +1,10 @@
 #pragma once
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
+
 #include "block.h"
 #include <stdint.h>
+#include <vector>
 
 struct Chunk {
 
@@ -9,6 +13,7 @@ struct Chunk {
 	int32_t cz;
 
 	void generate();
+	void buildMesh();
 	void render();
 
 	bool isDirty = false;
@@ -19,12 +24,23 @@ struct Chunk {
 
 	unsigned int blocks[CHUNK_SIZE];
 
+	std::vector<float> vertices;
+	unsigned int vao, vbo = 0;
+	int vertexCount = 0;
+
+	bool inRange(int x, int y, int z) const {
+		return 
+			x >= 0 && x < CHUNK_WIDTH &&
+			y >= 0 && y < CHUNK_HEIGHT &&
+			z >= 0 && z < CHUNK_WIDTH;
+	}
 
 	int Index(int x, int y, int z) const {
 		return x + z * CHUNK_WIDTH + y * CHUNK_WIDTH * CHUNK_WIDTH;
 	}
 
 	unsigned int Get(int x, int y, int z) const {
+		if (!inRange(x, y, z)) return 0;
 		return blocks[Index(x, y, z)];
 	}
 };

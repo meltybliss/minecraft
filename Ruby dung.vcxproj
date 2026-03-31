@@ -24,6 +24,7 @@
     <ProjectGuid>{e2df1acf-a2ac-4341-999b-f8918679ef5c}</ProjectGuid>
     <RootNamespace>Rubydung</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>infiniminer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
