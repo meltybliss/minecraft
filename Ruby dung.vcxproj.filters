@@ -16,6 +16,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{eb58995d-d5c2-4cc2-95ed-fad010e88c60}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lib">
+      <UniqueIdentifier>{8e503c16-ab2e-4690-b3ff-9b3d5f2d152a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\glad.c">
@@ -35,6 +38,9 @@
     <ClInclude Include="include\glad\glad.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="include\KHR\khrplatform.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\basic.frag">
@@ -43,5 +49,10 @@
     <None Include="shaders\basic.vert">
       <Filter>Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\glfw3.lib">
+      <Filter>lib</Filter>
+    </Library>
   </ItemGroup>
 </Project>
