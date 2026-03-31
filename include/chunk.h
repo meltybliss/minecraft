@@ -5,7 +5,7 @@
 #include "block.h"
 #include <stdint.h>
 #include <vector>
-
+#include <iostream>
 struct Chunk {
 
 	

@@ -59,7 +59,7 @@ inline Vec3 Cross(const Vec3& a, const Vec3& b) {
 
 
 struct Camera {
-	Vec3 pos{ 0.0f, 10.0f, 0.0f };
+	Vec3 pos{ 0.0f, 100.0f, 0.0f };
 
 	float yaw = -90.0f;
 	float pitch = 0.0f;

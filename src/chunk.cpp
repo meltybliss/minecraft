@@ -51,25 +51,88 @@ void Chunk::generate() {
 void Chunk::buildMesh() {
 	vertices.clear();
 
+	float s = static_cast<float>(blockSize);
+
 	for (int y = 0; y < CHUNK_HEIGHT; y++) {
 		for (int x = 0; x < CHUNK_WIDTH; x++) {
 			for (int z = 0; z < CHUNK_WIDTH; z++) {
 				unsigned int block = Get(x, y, z);
 				if (block == 0) continue;
 
+				float fx = static_cast<float>(x + cx * CHUNK_WIDTH) * s;
+				float fy = static_cast<float>(y) * s;
+				float fz = static_cast<float>(z + cz * CHUNK_WIDTH) * s;
 				//è„Ç™ãÛãCÇ»ÇÁ top face Çí«â¡
+
+				if (x == 8 && y == CHUNK_HEIGHT / 2 - 1 && z == 8) {
+					std::cout << "top? " << (Get(x, y + 1, z) == 0) << "\n";
+					std::cout << "bottom? " << (Get(x, y - 1, z) == 0) << "\n";
+					std::cout << "right? " << (Get(x + 1, y, z) == 0) << "\n";
+					std::cout << "left? " << (Get(x - 1, y, z) == 0) << "\n";
+					std::cout << "back? " << (Get(x, y, z + 1) == 0) << "\n";
+					std::cout << "front? " << (Get(x, y, z - 1) == 0) << "\n";
+				}
+
+				//top
 				if (Get(x, y + 1, z) == 0) {
-					float fx = static_cast<float>(x + cx * CHUNK_WIDTH);
-					float fy = static_cast<float>(y);
-					float fz = static_cast<float>(z + cz * CHUNK_WIDTH);
+		
+					AddFace(vertices,
+						fx, fy + s, fz,
+						fx + s, fy + s, fz,
+						fx + s, fy + s, fz + s,
+						fx, fy + s, fz + s);
+
+
+				} 
+
+				//bottom
+				if (Get(x, y - 1, z) == 0) {
+					
+					AddFace(vertices,
+						fx, fy, fz,
+						fx, fy, fz + s,
+						fx + s, fy, fz + s,
+						fx + s, fy, fz);
+				}
+
+				//right
+				if (Get(x + 1, y, z) == 0) {
 
 					AddFace(vertices,
-						fx, fy + 1, fz,
-						fx + 1, fy + 1, fz,
-						fx + 1, fy + 1, fz + 1,
-						fx, fy + 1, fz + 1);
+						fx + s, fy, fz,
+						fx + s, fy, fz + s,
+						fx + s, fy + s, fz + s,
+						fx + s, fy + s, fz);
 
+				}
+				
+				//left
+				if (Get(x - 1, y, z) == 0) {
+					AddFace(vertices,
+						fx, fy, fz,
+						fx, fy, fz + s,
+						fx, fy + s, fz + s,
+						fx, fy + s, fz);
+				}
 
+				//back
+				if (Get(x, y, z + 1) == 0) {
+
+					AddFace(vertices,
+						fx, fy, fz + s,
+						fx, fy + s, fz + s,
+						fx + s, fy + s, fz + s,
+						fx + s, fy, fz + s);
+				}
+
+				//front
+				if (Get(x, y, z - 1) == 0) {
+
+					AddFace(vertices,
+						fx, fy, fz,
+						fx + s, fy, fz,
+						fx + s, fy + s, fz,
+						fx, fy + s, fz);
 				}
 			}
 		}

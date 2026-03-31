@@ -1,3 +1,3 @@
 #include "block.h"
 
-int blockSize = 30;
+int blockSize = 1;
