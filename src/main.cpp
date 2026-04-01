@@ -76,6 +76,8 @@ int main() {
 
 	glEnable(GL_DEPTH_TEST);
 
+
+
 	glViewport(0, 0, 800, 600);
 	glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
 
@@ -84,7 +86,7 @@ int main() {
 	unsigned int program = CreateShaderProgram("shaders/basic.vert", "shaders/basic.frag");
 
 	
-
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	float lastTime = (float)glfwGetTime();
 	while (!glfwWindowShouldClose(window)) {

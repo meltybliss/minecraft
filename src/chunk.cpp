@@ -1,22 +1,31 @@
 #include "chunk.h"
+#include "world.h"
+static void AddVertex(std::vector<float>& v,
+	float x, float y, float z,
+	float r, float g, float b)
+{
+	v.push_back(x);
+	v.push_back(y);
+	v.push_back(z);
+	v.push_back(r);
+	v.push_back(g);
+	v.push_back(b);
+}
 
 static void AddFace(std::vector<float>& v,
 	float x0, float y0, float z0,
 	float x1, float y1, float z1,
 	float x2, float y2, float z2,
-	float x3, float y3, float z3) {
+	float x3, float y3, float z3,
+	float r, float g, float b)
+{
+	AddVertex(v, x0, y0, z0, r, g, b);
+	AddVertex(v, x1, y1, z1, r, g, b);
+	AddVertex(v, x2, y2, z2, r, g, b);
 
-	//triangle 1
-	v.push_back(x0); v.push_back(y0); v.push_back(z0);
-	v.push_back(x1); v.push_back(y1); v.push_back(z1);
-	v.push_back(x2); v.push_back(y2); v.push_back(z2);
-
-	//triangle 2
-	v.push_back(x2); v.push_back(y2); v.push_back(z2);
-	v.push_back(x3); v.push_back(y3); v.push_back(z3);
-	v.push_back(x0); v.push_back(y0); v.push_back(z0);
-
-
+	AddVertex(v, x2, y2, z2, r, g, b);
+	AddVertex(v, x3, y3, z3, r, g, b);
+	AddVertex(v, x0, y0, z0, r, g, b);
 }
 
 
@@ -53,92 +62,117 @@ void Chunk::buildMesh() {
 
 	float s = static_cast<float>(blockSize);
 
+	Chunk* neighbors[3][3];
+	for (int i = -1; i <= 1; i++) {
+		for (int j = -1; j <= 1; j++) {
+			neighbors[i + 1][j + 1] = gWorld->GetChunkPtr(cx + i, cz + j);
+		}
+	}
+
 	for (int y = 0; y < CHUNK_HEIGHT; y++) {
 		for (int x = 0; x < CHUNK_WIDTH; x++) {
 			for (int z = 0; z < CHUNK_WIDTH; z++) {
+				
+
 				unsigned int block = Get(x, y, z);
 				if (block == 0) continue;
 
 				float fx = static_cast<float>(x + cx * CHUNK_WIDTH) * s;
 				float fy = static_cast<float>(y) * s;
 				float fz = static_cast<float>(z + cz * CHUNK_WIDTH) * s;
+
 				//è„Ç™ãÛãCÇ»ÇÁ top face Çí«â¡
 
-				if (x == 8 && y == CHUNK_HEIGHT / 2 - 1 && z == 8) {
-					std::cout << "top? " << (Get(x, y + 1, z) == 0) << "\n";
-					std::cout << "bottom? " << (Get(x, y - 1, z) == 0) << "\n";
-					std::cout << "right? " << (Get(x + 1, y, z) == 0) << "\n";
-					std::cout << "left? " << (Get(x - 1, y, z) == 0) << "\n";
-					std::cout << "back? " << (Get(x, y, z + 1) == 0) << "\n";
-					std::cout << "front? " << (Get(x, y, z - 1) == 0) << "\n";
-				}
+				auto InAir = [&](int nx, int ny, int nz) -> bool {
+					if (ny < 0 || ny >= CHUNK_HEIGHT) return true;
+
+					int targetCx, targetCz = 1;
+					int lx = nx, lz = nz;
+
+					if (nx < 0) { targetCx = 0; lx = CHUNK_WIDTH - 1; }
+					else if (nx >= CHUNK_WIDTH) { targetCx = 2; lx = 0; }
+
+					if (nz < 0) { targetCz = 0; lz = CHUNK_WIDTH - 1; }
+					else if (nz >= CHUNK_WIDTH) { targetCz = 2; lz = 0; }
+
+					Chunk* target = neighbors[targetCx][targetCz];
+					if (target == nullptr) return true;
+
+					return target->Get(lx, ny, lz) == 0;
+				};
 
 				//top
-				if (Get(x, y + 1, z) == 0) {
+				if (InAir(x, y + 1, z)) {
 		
 					AddFace(vertices,
 						fx, fy + s, fz,
 						fx + s, fy + s, fz,
 						fx + s, fy + s, fz + s,
-						fx, fy + s, fz + s);
+						fx, fy + s, fz + s,
+						0.0f, 1.0f, 0.0f);
 
 
 				} 
 
 				//bottom
-				if (Get(x, y - 1, z) == 0) {
+				if (InAir(x, y - 1, z)) {
 					
 					AddFace(vertices,
 						fx, fy, fz,
 						fx, fy, fz + s,
 						fx + s, fy, fz + s,
-						fx + s, fy, fz);
+						fx + s, fy, fz,
+						1.0f, 0.0f, 0.0f);
 				}
 
 				//right
-				if (Get(x + 1, y, z) == 0) {
+				if (InAir(x + 1, y, z)) {
 
 					AddFace(vertices,
 						fx + s, fy, fz,
 						fx + s, fy, fz + s,
 						fx + s, fy + s, fz + s,
-						fx + s, fy + s, fz);
+						fx + s, fy + s, fz,
+						0.0f, 0.0f, 1.0f);
 
 				}
 				
 				//left
-				if (Get(x - 1, y, z) == 0) {
+				if (InAir(x - 1, y, z)) {
 					AddFace(vertices,
 						fx, fy, fz,
 						fx, fy, fz + s,
 						fx, fy + s, fz + s,
-						fx, fy + s, fz);
+						fx, fy + s, fz,
+						1.0f, 1.0f, 0.0f);
 				}
 
 				//back
-				if (Get(x, y, z + 1) == 0) {
+				if (InAir(x, y, z + 1)) {
 
 					AddFace(vertices,
 						fx, fy, fz + s,
 						fx, fy + s, fz + s,
 						fx + s, fy + s, fz + s,
-						fx + s, fy, fz + s);
+						fx + s, fy, fz + s,
+						1.0f, 0.0f, 1.0f);
 				}
 
 				//front
-				if (Get(x, y, z - 1) == 0) {
+				if (InAir(x, y, z - 1)) {
 
 					AddFace(vertices,
 						fx, fy, fz,
 						fx + s, fy, fz,
 						fx + s, fy + s, fz,
-						fx, fy + s, fz);
+						fx, fy + s, fz,
+						0.0f, 1.0f, 1.0f);
 				}
 			}
 		}
 	}
 
-	vertexCount = static_cast<int>(vertices.size() / 3);
+	vertexCount = static_cast<int>(vertices.size() / 6);
 
 	if (vao == 0) glGenVertexArrays(1, &vao);
 	if (vbo == 0) glGenBuffers(1, &vbo);
@@ -147,8 +181,13 @@ void Chunk::buildMesh() {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	// color
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
 

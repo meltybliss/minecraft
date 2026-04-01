@@ -3,6 +3,11 @@
 
 World* gWorld = nullptr;
 
+
+static int32_t FloorDiv(int v, int b) {
+	return static_cast<int32_t>(std::floor(static_cast<float>(v) / b));
+}
+
 World::World() {
 	gWorld = this;
 }
@@ -54,4 +59,26 @@ void World::render() {
 
 		c->render();
 	}
+}
+
+
+unsigned int World::GetBlockGlobal(int wx, int wy, int wz) {
+	int32_t cx = FloorDiv(wx, Chunk::CHUNK_WIDTH * blockSize);
+	int32_t cz = FloorDiv(wz, Chunk::CHUNK_WIDTH * blockSize);
+
+	uint64_t key = GetChunkKey(cx, cz);
+	if (Chunks.find(key) == Chunks.end()) return 0;
+
+	Chunk* c = Chunks[key].get();
+	int lx = wx - cx * Chunk::CHUNK_WIDTH;
+	int ly = wy;
+	int lz = wz - cz * Chunk::CHUNK_WIDTH;
+
+	return c->Get(lx, ly, lz);
+}
+
+Chunk* World::GetChunkPtr(int cx, int cz) {
+	uint64_t key = GetChunkKey(cx, cz);
+	if (Chunks.find(key) == Chunks.end()) return nullptr;
+	return Chunks[key].get();
 }
