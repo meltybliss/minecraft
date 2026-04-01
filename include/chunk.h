@@ -8,7 +8,8 @@
 #include <iostream>
 struct Chunk {
 
-	
+	~Chunk();
+
 	int32_t cx;
 	int32_t cz;
 

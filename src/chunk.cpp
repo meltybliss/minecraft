@@ -1,5 +1,12 @@
 #include "chunk.h"
 #include "world.h"
+
+Chunk::~Chunk() {
+	if (vao != 0) glDeleteVertexArrays(1, &vao);
+	if (vbo != 0) glDeleteBuffers(1, &vbo);
+
+}
+
 static void AddVertex(std::vector<float>& v,
 	float x, float y, float z,
 	float r, float g, float b)
