@@ -9,30 +9,30 @@ Chunk::~Chunk() {
 
 static void AddVertex(std::vector<float>& v,
 	float x, float y, float z,
-	float r, float g, float b)
+	float u, float vv)
 {
 	v.push_back(x);
 	v.push_back(y);
 	v.push_back(z);
-	v.push_back(r);
-	v.push_back(g);
-	v.push_back(b);
+	v.push_back(u);
+	v.push_back(vv);
 }
 
 static void AddFace(std::vector<float>& v,
 	float x0, float y0, float z0,
 	float x1, float y1, float z1,
 	float x2, float y2, float z2,
-	float x3, float y3, float z3,
-	float r, float g, float b)
+	float x3, float y3, float z3)
 {
-	AddVertex(v, x0, y0, z0, r, g, b);
-	AddVertex(v, x1, y1, z1, r, g, b);
-	AddVertex(v, x2, y2, z2, r, g, b);
+	// triangle 1
+	AddVertex(v, x0, y0, z0, 0.0f, 0.0f);
+	AddVertex(v, x1, y1, z1, 1.0f, 0.0f);
+	AddVertex(v, x2, y2, z2, 1.0f, 1.0f);
 
-	AddVertex(v, x2, y2, z2, r, g, b);
-	AddVertex(v, x3, y3, z3, r, g, b);
-	AddVertex(v, x0, y0, z0, r, g, b);
+	// triangle 2
+	AddVertex(v, x2, y2, z2, 1.0f, 1.0f);
+	AddVertex(v, x3, y3, z3, 0.0f, 1.0f);
+	AddVertex(v, x0, y0, z0, 0.0f, 0.0f);
 }
 
 
@@ -116,8 +116,7 @@ void Chunk::buildMesh() {
 						fx, fy + s, fz,
 						fx + s, fy + s, fz,
 						fx + s, fy + s, fz + s,
-						fx, fy + s, fz + s,
-						0.0f, 1.0f, 0.0f);
+						fx, fy + s, fz + s);
 
 
 				} 
@@ -129,8 +128,7 @@ void Chunk::buildMesh() {
 						fx, fy, fz,
 						fx, fy, fz + s,
 						fx + s, fy, fz + s,
-						fx + s, fy, fz,
-						1.0f, 0.0f, 0.0f);
+						fx + s, fy, fz);
 				}
 
 				//right
@@ -140,8 +138,7 @@ void Chunk::buildMesh() {
 						fx + s, fy, fz,
 						fx + s, fy, fz + s,
 						fx + s, fy + s, fz + s,
-						fx + s, fy + s, fz,
-						0.0f, 0.0f, 1.0f);
+						fx + s, fy + s, fz);
 
 				}
 				
@@ -151,8 +148,7 @@ void Chunk::buildMesh() {
 						fx, fy, fz,
 						fx, fy, fz + s,
 						fx, fy + s, fz + s,
-						fx, fy + s, fz,
-						1.0f, 1.0f, 0.0f);
+						fx, fy + s, fz);
 				}
 
 				//back
@@ -162,8 +158,7 @@ void Chunk::buildMesh() {
 						fx, fy, fz + s,
 						fx, fy + s, fz + s,
 						fx + s, fy + s, fz + s,
-						fx + s, fy, fz + s,
-						1.0f, 0.0f, 1.0f);
+						fx + s, fy, fz + s);
 				}
 
 				//front
@@ -173,28 +168,24 @@ void Chunk::buildMesh() {
 						fx, fy, fz,
 						fx + s, fy, fz,
 						fx + s, fy + s, fz,
-						fx, fy + s, fz,
-						0.0f, 1.0f, 1.0f);
+						fx, fy + s, fz);
 				}
 			}
 		}
 	}
 
-	vertexCount = static_cast<int>(vertices.size() / 6);
-
-	if (vao == 0) glGenVertexArrays(1, &vao);
-	if (vbo == 0) glGenBuffers(1, &vbo);
+	vertexCount = static_cast<int>(vertices.size() / 5);
 
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
 	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// color
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	// uv
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
