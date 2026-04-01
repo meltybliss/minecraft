@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 #include "Mat4.h"
-
+#include "texture.h"
 
 
 std::string ReadFile(const std::string& path) {
@@ -88,39 +88,44 @@ int main() {
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+	GLuint blockTex = LoadTexture2D("textures/atlas.png");
+
+	glUseProgram(program);
+	int texLoc = glGetUniformLocation(program, "uTexture");
+	int viewLoc = glGetUniformLocation(program, "uView");
+	int projLoc = glGetUniformLocation(program, "uProj");
+
+
 	float lastTime = (float)glfwGetTime();
+
 	while (!glfwWindowShouldClose(window)) {
 		float curTime = (float)glfwGetTime();
 		float deltaTime = curTime - lastTime;
 		lastTime = curTime;
 
 		glfwPollEvents();
-
-		//tick
 		game.Tick(deltaTime);
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//openGl draw
 		glUseProgram(program);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, blockTex);
+		glUniform1i(texLoc, 0);
 
 		Vec3 eye = game.cam.pos;
 		Vec3 center = game.cam.pos + game.cam.forward;
-		
+
 		Mat4 view = LookAt(eye, center, game.cam.up);
 		Mat4 proj = Perspective(70.0f, 800.0f / 600.0f, 0.1f, 1000.0f);
-
-		int viewLoc = glGetUniformLocation(program, "uView");
-		int projLoc = glGetUniformLocation(program, "uProj");
 
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.m);
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, proj.m);
 
-
 		game.Render();
 
 		glfwSwapBuffers(window);
-
 	}
 
 	glDeleteProgram(program);

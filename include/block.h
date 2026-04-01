@@ -2,7 +2,6 @@
 
 enum class BlockType {
 	AIR = 0,
-	Grass,
 	Dirt,
 	Stone,
 };

@@ -6,6 +6,20 @@
 #include <stdint.h>
 #include <vector>
 #include <iostream>
+
+
+struct UVRect {
+	float u0, v0, u1, v1;
+};
+
+
+enum class FaceType {
+	Top,
+	Bottom,
+	Side
+};
+
+
 struct Chunk {
 
 	~Chunk();

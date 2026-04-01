@@ -7,6 +7,50 @@ Chunk::~Chunk() {
 
 }
 
+static UVRect AtlasUV(int tx, int ty, int cols, int rows) {
+	const float atlasW = 256.0f;
+	const float atlasH = 620.0f;
+
+	const float tileW = atlasW / cols;   // 64
+	const float tileH = atlasH / rows;   // 62
+
+	int flippedTy = rows - 1 - ty;
+
+	float px0 = tx * tileW;
+	float py0 = flippedTy * tileH;
+	float px1 = px0 + tileW;
+	float py1 = py0 + tileH;
+
+	// 0.5 pixel ‚¾‚¯“à‘¤‚Ö
+	px0 += 0.5f;
+	py0 += 0.5f;
+	px1 -= 0.5f;
+	py1 -= 0.5f;
+
+	float u0 = px0 / atlasW;
+	float v0 = py0 / atlasH;
+	float u1 = px1 / atlasW;
+	float v1 = py1 / atlasH;
+
+	return { u0, v0, u1, v1 };
+}
+
+static UVRect GetBlockUV(unsigned int block, FaceType face) {
+	
+	const unsigned int DIRT = static_cast<unsigned int>(BlockType::Dirt);
+	const unsigned int STONE = static_cast<unsigned int>(BlockType::Stone);
+
+	if (block == DIRT) {
+		return AtlasUV(2, 6, 4, 10); // dirt
+	}
+
+	if (block == STONE) {
+		return AtlasUV(1, 1, 4, 10); // stone
+	}
+
+	return AtlasUV(0, 1, 4, 10);
+}
+
 static void AddVertex(std::vector<float>& v,
 	float x, float y, float z,
 	float u, float vv)
@@ -18,21 +62,21 @@ static void AddVertex(std::vector<float>& v,
 	v.push_back(vv);
 }
 
-static void AddFace(std::vector<float>& v,
+static void AddFaceUV(std::vector<float>& v,
 	float x0, float y0, float z0,
 	float x1, float y1, float z1,
 	float x2, float y2, float z2,
-	float x3, float y3, float z3)
+	float x3, float y3, float z3,
+	float u0, float v0,
+	float u1, float v1)
 {
-	// triangle 1
-	AddVertex(v, x0, y0, z0, 0.0f, 0.0f);
-	AddVertex(v, x1, y1, z1, 1.0f, 0.0f);
-	AddVertex(v, x2, y2, z2, 1.0f, 1.0f);
+	AddVertex(v, x0, y0, z0, u0, v0);
+	AddVertex(v, x1, y1, z1, u1, v0);
+	AddVertex(v, x2, y2, z2, u1, v1);
 
-	// triangle 2
-	AddVertex(v, x2, y2, z2, 1.0f, 1.0f);
-	AddVertex(v, x3, y3, z3, 0.0f, 1.0f);
-	AddVertex(v, x0, y0, z0, 0.0f, 0.0f);
+	AddVertex(v, x2, y2, z2, u1, v1);
+	AddVertex(v, x3, y3, z3, u0, v1);
+	AddVertex(v, x0, y0, z0, u0, v0);
 }
 
 
@@ -45,7 +89,7 @@ void Chunk::generate() {
 				int ground = CHUNK_HEIGHT / 2;
 
 				if (y == ground) {
-					b = BlockType::Grass;
+					b = BlockType::Dirt;
 				}
 				else if (y < ground && y > ground - 6) {
 					b = BlockType::Dirt;
@@ -111,70 +155,82 @@ void Chunk::buildMesh() {
 
 				//top
 				if (InAir(x, y + 1, z)) {
-		
-					AddFace(vertices,
+					UVRect uv = GetBlockUV(block, FaceType::Top);
+
+					AddFaceUV(vertices,
 						fx, fy + s, fz,
 						fx + s, fy + s, fz,
 						fx + s, fy + s, fz + s,
-						fx, fy + s, fz + s);
+						fx, fy + s, fz + s,
+						uv.u0, uv.v0, uv.u1, uv.v1);
 
 
 				} 
 
 				//bottom
 				if (InAir(x, y - 1, z)) {
-					
-					AddFace(vertices,
+					UVRect uv = GetBlockUV(block, FaceType::Bottom);
+					AddFaceUV(vertices,
 						fx, fy, fz,
 						fx, fy, fz + s,
 						fx + s, fy, fz + s,
-						fx + s, fy, fz);
+						fx + s, fy, fz,
+						uv.u0, uv.v0, uv.u1, uv.v1);
 				}
 
 				//right
 				if (InAir(x + 1, y, z)) {
-
-					AddFace(vertices,
+					UVRect uv = GetBlockUV(block, FaceType::Side);
+					AddFaceUV(vertices,
 						fx + s, fy, fz,
 						fx + s, fy, fz + s,
 						fx + s, fy + s, fz + s,
-						fx + s, fy + s, fz);
+						fx + s, fy + s, fz,
+						uv.u0, uv.v0, uv.u1, uv.v1);
 
 				}
 				
 				//left
 				if (InAir(x - 1, y, z)) {
-					AddFace(vertices,
+					UVRect uv = GetBlockUV(block, FaceType::Side);
+					AddFaceUV(vertices,
 						fx, fy, fz,
 						fx, fy, fz + s,
 						fx, fy + s, fz + s,
-						fx, fy + s, fz);
+						fx, fy + s, fz,
+						uv.u0, uv.v0, uv.u1, uv.v1);
 				}
 
 				//back
 				if (InAir(x, y, z + 1)) {
-
-					AddFace(vertices,
+					UVRect uv = GetBlockUV(block, FaceType::Side);
+					AddFaceUV(vertices,
 						fx, fy, fz + s,
 						fx, fy + s, fz + s,
 						fx + s, fy + s, fz + s,
-						fx + s, fy, fz + s);
+						fx + s, fy, fz + s,
+						uv.u0, uv.v0, uv.u1, uv.v1);
 				}
 
 				//front
 				if (InAir(x, y, z - 1)) {
-
-					AddFace(vertices,
+					UVRect uv = GetBlockUV(block, FaceType::Side);
+					AddFaceUV(vertices,
 						fx, fy, fz,
 						fx + s, fy, fz,
 						fx + s, fy + s, fz,
-						fx, fy + s, fz);
+						fx, fy + s, fz,
+						uv.u0, uv.v0, uv.u1, uv.v1);
 				}
 			}
 		}
 	}
 
 	vertexCount = static_cast<int>(vertices.size() / 5);
+
+
+	if (vao == 0) glGenVertexArrays(1, &vao);
+	if (vbo == 0) glGenBuffers(1, &vbo);
 
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
