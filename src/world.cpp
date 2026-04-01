@@ -23,8 +23,12 @@ void World::Tick() {
 
 	for (int32_t x = curCx - RENDER_DISTANCE; x <= curCx + RENDER_DISTANCE; x++) {
 		for (int32_t z = curCz - RENDER_DISTANCE; z <= curCz + RENDER_DISTANCE; z++) {
+
+			if (std::abs(x) >= MaxCX || std::abs(z) >= MaxCZ) continue;
+
 			uint64_t key = GetChunkKey(x, z);
 			if (Chunks.find(key) == Chunks.end()) {
+
 
 				auto c = std::make_unique<Chunk>();
 				c->cx = x;

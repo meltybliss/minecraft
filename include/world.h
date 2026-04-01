@@ -25,7 +25,7 @@ private:
 	}
 
 	int32_t MaxCX = 40;
-	int32_t MaxCz = 40;
+	int32_t MaxCZ = 40;
 
 
 	void MarkChunkDirty(int32_t cx, int32_t cz);
