@@ -15,8 +15,10 @@ World::World() {
 void World::Tick() {
 
 	Vec3 pos = gGame->cam.pos;
-	int32_t curCx = static_cast<int32_t>(std::floor(pos.x / (Chunk::CHUNK_WIDTH)));
-	int32_t curCz = static_cast<int32_t>(std::floor(pos.z / (Chunk::CHUNK_WIDTH)));
+	float chunkWorldSize = static_cast<float>(Chunk::CHUNK_WIDTH * blockSize);
+
+	int32_t curCx = static_cast<int32_t>(std::floor(pos.x / chunkWorldSize));
+	int32_t curCz = static_cast<int32_t>(std::floor(pos.z / chunkWorldSize));
 
 
 	for (int32_t x = curCx - RENDER_DISTANCE; x <= curCx + RENDER_DISTANCE; x++) {
@@ -30,6 +32,12 @@ void World::Tick() {
 
 				c->generate();
 				Chunks[key] = std::move(c);
+
+				MarkChunkDirty(x, z);
+				MarkChunkDirty(x + 1, z);
+				MarkChunkDirty(x - 1, z);
+				MarkChunkDirty(x, z + 1);
+				MarkChunkDirty(x, z - 1);
 				
 			}
 		}
@@ -81,4 +89,14 @@ Chunk* World::GetChunkPtr(int cx, int cz) {
 	uint64_t key = GetChunkKey(cx, cz);
 	if (Chunks.find(key) == Chunks.end()) return nullptr;
 	return Chunks[key].get();
+}
+
+
+void World::MarkChunkDirty(int32_t cx, int32_t cz) {
+	uint64_t key = GetChunkKey(cx, cz);
+
+	auto it = Chunks.find(key);
+	if (it == Chunks.end() || !it->second) return;
+	
+	it->second->isDirty = true;
 }

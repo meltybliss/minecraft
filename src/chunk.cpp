@@ -86,7 +86,8 @@ void Chunk::buildMesh() {
 				auto InAir = [&](int nx, int ny, int nz) -> bool {
 					if (ny < 0 || ny >= CHUNK_HEIGHT) return true;
 
-					int targetCx, targetCz = 1;
+					int targetCx = 1;
+					int targetCz = 1;
 					int lx = nx, lz = nz;
 
 					if (nx < 0) { targetCx = 0; lx = CHUNK_WIDTH - 1; }
