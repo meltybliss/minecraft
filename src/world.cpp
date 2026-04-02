@@ -121,6 +121,11 @@ bool World::SetBlockGlobal(int bx, int by, int bz, unsigned int block) {
 	int ly = by;
 	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
+	if (block != 0) {
+		bool ok = c->isAirBlock(lx, ly, lz);
+		if (!ok) return false;
+	}
+
 	bool ok = c->Set(lx, ly, lz, block);
 	if (!ok) return false;
 
