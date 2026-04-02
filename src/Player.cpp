@@ -12,6 +12,9 @@ void Player::UpdatePlrMovement(GLFWwindow* window, float dt) {
 
 	Vec3 forward = cam.forward;
 	forward.y = 0.0f;
+
+    grounded = false;
+
 	if (Length(forward) > 0.0f) forward = Normalize(forward);
 
     Vec3 right = Normalize(Cross(forward, Vec3{ 0, 1, 0 }));
@@ -24,7 +27,33 @@ void Player::UpdatePlrMovement(GLFWwindow* window, float dt) {
 
     if (Length(move) > 0.0f) move = Normalize(move);
 
-    pos += move * walkSpeed * dt;
+    vel.x = move.x * walkSpeed;
+    vel.z = move.z * walkSpeed;
+    vel.y += gravity * dt;
+
+    pos.x += vel.x * dt;
+    if (IntersectsSolidBlock(GetAABBAt(pos))) {
+        pos.x -= vel.x * dt;
+        vel.x = 0.0f;
+    }
+
+    pos.z += vel.z * dt;
+    if (IntersectsSolidBlock(GetAABBAt(pos))) {
+        pos.z -= vel.z * dt;
+        vel.z = 0.0f;
+    }
+
+    pos.y += vel.y * dt;
+    if (IntersectsSolidBlock(GetAABBAt(pos))) {
+        pos.y -= vel.y * dt;
+        if (vel.y < 0.0f) {
+            grounded = true;
+        }
+
+        vel.y = 0.0f;
+    }
+
+
     this->UpdateCamera();
 }
 
@@ -61,4 +90,34 @@ void Player::UpdateMouse() {
     prevLeftDown = leftDown;
     prevRightDown = rightDown;
 
+}
+
+
+AABB Player::GetAABBAt(const Vec3& p) const {
+    return {
+        Vec3{p.x - radius, p.y, p.z - radius},
+        Vec3{p.x + radius, p.y + height, p.z + radius}
+    };
+}
+
+
+bool Player::IntersectsSolidBlock(const AABB& box) {
+    int minX = box.min.x;
+    int maxX = box.max.x;
+    int minY = box.min.y;
+    int maxY = box.max.y;
+    int minZ = box.min.z;
+    int maxZ = box.max.z;
+
+    for (int y = minY; y <= maxY; y++) {
+        for (int z = minZ; z <= maxZ; z++) {
+            for (int x = minX; x <= maxX; x++) {
+                if (gWorld->GetBlockGlobal(x, y, z) != 0) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
 }

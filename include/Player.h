@@ -5,6 +5,11 @@
 #include "HitResult.h"
 #include "Ray.h"
 
+struct AABB {
+	Vec3 min;
+	Vec3 max;
+};
+
 class Player {
 public:
 	
@@ -30,7 +35,7 @@ public:
 	Camera& GetCamera() { return cam; }
 	const Camera& GetCamera() const { return cam; }
 private:
-	Vec3 pos{0.0f, 129.0f, 0.0f};//‘«Œ³Šî€
+	Vec3 pos{0.0f, 130.0f, 0.0f};//‘«Œ³Šî€
 	Vec3 vel;
 
 	float yaw = -90;
@@ -41,6 +46,8 @@ private:
 	float eyeHeight = 1.63;
 
 	float walkSpeed = 5.0f;
+	float gravity = -20.0f;
+
 
 	Camera cam;
 
@@ -49,6 +56,10 @@ private:
 	BlockType selectedBlock = BlockType::Dirt;
 
 	HitResult lastHit;
+
+
+	AABB GetAABBAt(const Vec3& p) const;
+	bool IntersectsSolidBlock(const AABB& box);
 
 	void UpdateCamera() {
 
