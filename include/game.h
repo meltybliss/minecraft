@@ -12,10 +12,10 @@ public:
 	void Tick(float deltaTime);
 	void Render();
 	Camera cam;
+	World world;
 private:
 
-	World world;
-	
+	HitResult lastHit;
 };
 
 extern Game* gGame;

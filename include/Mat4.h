@@ -2,18 +2,66 @@
 #include <cmath>
 #include "camera.h"
 
+inline float Length(const Vec3& v) {
+    return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+
+inline Vec3 Normalize(const Vec3& v) {
+    float len = Length(v);
+    if (len == 0.0f) return { 0.0f, 0.0f, 0.0f };
+
+    return { v.x / len, v.y / len, v.z / len };
+}
+
+inline Vec3 Cross(const Vec3& a, const Vec3& b) {
+    return {
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    };
+}
+
+
 struct Mat4 {
-	float m[16]{};
+    float m[16]{};
 
-	static Mat4 Identity() {
-		Mat4 r{};
-		r.m[0] = 1.0f;
-		r.m[5] = 1.0f;
-		r.m[10] = 1.0f;
-		r.m[15] = 1.0f;
-		return r;
-	}
+    static Mat4 Identity() {
+        Mat4 r{};
+        r.m[0] = 1.0f; r.m[5] = 1.0f; r.m[10] = 1.0f; r.m[15] = 1.0f;
+        return r;
+    }
 
+    // •½sˆÚ“®s—ñ‚Ì¶¬
+    static Mat4 Translate(const Vec3& v) {
+        Mat4 r = Identity();
+        r.m[12] = v.x;
+        r.m[13] = v.y;
+        r.m[14] = v.z;
+        return r;
+    }
+
+    // Šg‘åk¬s—ñ‚Ì¶¬
+    static Mat4 Scale(const Vec3& v) {
+        Mat4 r = Identity();
+        r.m[0] = v.x;
+        r.m[5] = v.y;
+        r.m[10] = v.z;
+        return r;
+    }
+
+    // s—ñ“¯m‚ÌŠ|‚¯Z (model = translate * scale ‚Ì‚½‚ß‚É•K—v)
+    Mat4 operator*(const Mat4& other) const {
+        Mat4 r{};
+        for (int i = 0; i < 4; i++) {     // s
+            for (int j = 0; j < 4; j++) { // —ñ
+                for (int k = 0; k < 4; k++) {
+                    r.m[j * 4 + i] += m[k * 4 + i] * other.m[j * 4 + k];
+                }
+            }
+        }
+        return r;
+    }
 };
 
 inline Mat4 Perspective(float fovDeg, float aspect, float nearZ, float farZ) {

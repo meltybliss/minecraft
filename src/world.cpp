@@ -203,7 +203,7 @@ HitResult World::TraceRay(Ray& ray, float maxDist) {
 
 		if (GetBlockGlobal(x, y, z) != (unsigned int)BlockType::AIR) {
 			hit.isHit = true;
-			hit.hitPos = ray.At(t);
+			hit.hitPos = { (float)x, (float)y, (float)z };
 			hit.dist = t;
 			return hit;
 		}
@@ -213,4 +213,54 @@ HitResult World::TraceRay(Ray& ray, float maxDist) {
 
 	return hit;
 
+}
+
+
+void World::InitRenderer() {
+	selectionShaderProgram = CreateShaderProgram("shaders/wireframe.vert", "shaders/wireframe.frag");
+	float vertices[] = {
+		0,0,0, 1,0,0,  1,0,0, 1,0,1,  1,0,1, 0,0,1,  0,0,1, 0,0,0,
+		0,1,0, 1,1,0,  1,1,0, 1,1,1,  1,1,1, 0,1,1,  0,1,1, 0,1,0,
+		0,0,0, 0,1,0,  1,0,0, 1,1,0,  1,0,1, 1,1,1,  0,0,1, 0,1,1
+	};
+	glGenVertexArrays(1, &highlightVAO);
+	glGenBuffers(1, &highlightVBO);
+	glBindVertexArray(highlightVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, highlightVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glBindVertexArray(0);
+}
+
+
+void World::RenderHighlight(const HitResult& hit) {
+	if (!hit.isHit) return;
+
+	glUseProgram(selectionShaderProgram);
+
+	float s = 1.005f;
+	float o = (s - 1.0f) * 0.5f;
+
+	// hit.hitPos が整数 {x, y, z} であることを前提にする
+	Mat4 translation = Mat4::Translate(Vec3{ hit.hitPos.x - o, hit.hitPos.y - o, hit.hitPos.z - o });
+	Mat4 scaling = Mat4::Scale(Vec3{ s, s, s });
+	Mat4 model = translation * scaling;
+
+	// カメラクラスから取得（mainのPerspective計算と数値を合わせる）
+	Mat4 view = gGame->cam.GetViewMatrix();
+	Mat4 projection = gGame->cam.GetProjectionMatrix();
+
+	glUniformMatrix4fv(glGetUniformLocation(selectionShaderProgram, "model"), 1, GL_FALSE, model.m);
+	glUniformMatrix4fv(glGetUniformLocation(selectionShaderProgram, "view"), 1, GL_FALSE, view.m);
+	glUniformMatrix4fv(glGetUniformLocation(selectionShaderProgram, "projection"), 1, GL_FALSE, projection.m);
+
+	// color を確実に白にする
+	glUniform3f(glGetUniformLocation(selectionShaderProgram, "color"), 1.0f, 1.0f, 1.0f);
+
+	glBindVertexArray(highlightVAO);
+	glLineWidth(2.0f);
+	glDrawArrays(GL_LINES, 0, 24);
+	glBindVertexArray(0);
+	glUseProgram(0); // 念のため解除
 }

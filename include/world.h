@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include <cmath>
 #include "HitResult.h"
+#include "ShaderInitUtils.h"
+#include "Mat4.h"
+
 class World {
 public:
 	World();
@@ -17,10 +20,22 @@ public:
 	Chunk* GetChunkPtr(int cx, int cz);
 
 	bool SetBlockByRay(Ray& ray, unsigned int block, float maxDist);
+	bool SetBlockGlobal(int wx, int wy, int wz, unsigned int block);
+
+	HitResult TraceRay(Ray& ray, float maxDist);
+
+
+	void InitRenderer();
+	void RenderHighlight(const HitResult& hit);
+
+
 private:
 
 	int RENDER_DISTANCE = 2;
 	int UNLOAD_DISTANCE = 4;
+
+	GLuint highlightVAO, highlightVBO;
+	GLuint selectionShaderProgram;
 
 	std::unordered_map<uint64_t, std::unique_ptr<Chunk>> Chunks;
 
@@ -33,9 +48,9 @@ private:
 
 
 	void MarkChunkDirty(int32_t cx, int32_t cz);
-	bool SetBlockGlobal(int wx, int wy, int wz, unsigned int block);
+	
 
-	HitResult TraceRay(Ray& ray, float maxDist);
+
 };
 
 extern World* gWorld;
