@@ -7,6 +7,26 @@ Chunk::~Chunk() {
 
 }
 
+
+void Chunk::CarveSphere(int cx, int cy, int cz, int radius) {
+	for (int z = 0; z < CHUNK_WIDTH; z++) {
+		for (int y = 0; y < CHUNK_HEIGHT; y++) {
+			for (int x = 0; x < CHUNK_WIDTH; x++) {
+				int dx = x - cx;
+				int dy = y - cy;
+				int dz = z - cz;
+
+				if (dx * dx + dy * dy + dz * dz <= radius * radius) {
+					Set(x, y, z, (unsigned int)BlockType::AIR);
+				}
+
+
+			}
+		}
+	}
+
+}
+
 static UVRect AtlasUV(int tx, int ty, int cols, int rows) {
 	const float du = 1.0f / cols;
 	const float dv = 1.0f / rows;
@@ -91,7 +111,7 @@ void Chunk::generate() {
 	//mix stones into chunk
 	for (int i = 0; i < 8; i++) {
 		int cx = rand() % CHUNK_WIDTH;
-		int cy = rand() % (ground + 1);
+		int cy = rand() % (ground - 4);
 		int cz = rand() % CHUNK_WIDTH;
 		int radius = 2 + rand() % 3;
 
@@ -127,6 +147,59 @@ void Chunk::generate() {
 				}
 			}
 		}
+	}
+
+
+	//ore vein RandomWalk
+	{
+		int x = rand() % CHUNK_WIDTH;
+		int y = 3 + rand() % (ground - 6);
+		int z = rand() % CHUNK_WIDTH;
+
+		for (int i = 0; i < 30; i++) {
+			if (Get(x, y, z) == (unsigned int)BlockType::Stone) {
+				Set(x, y, z, (unsigned int)BlockType::Ore);
+			}
+
+			int dir = rand() % 6;
+			if (dir == 0) x++;
+			if (dir == 1) x--;
+			if (dir == 2) y++;
+			if (dir == 3) y--;
+			if (dir == 4) z++;
+			if (dir == 5) z--;
+				 
+			x = std::clamp(x, 0, CHUNK_WIDTH - 1);
+			y = std::clamp(y, 0, CHUNK_HEIGHT - 1);
+			z = std::clamp(z, 0, CHUNK_WIDTH - 1);
+
+		}
+
+	}
+
+	//cave RandomWalk
+	{
+		int x = rand() % CHUNK_WIDTH;
+		int y = 8 + rand() % (ground - 6);
+		int z = rand() % CHUNK_WIDTH;
+
+		for (int i = 0; i < 50; i++) {
+			CarveSphere(x, y, z, 2);
+
+			int dir = rand() % 6;
+			if (dir == 0) x++;
+			if (dir == 1) x--;
+			if (dir == 2) y++;
+			if (dir == 3) y--;
+			if (dir == 4) z++;
+			if (dir == 5) z--;
+
+			x = std::clamp(x, 0, CHUNK_WIDTH - 1);
+			y = std::clamp(y, 0, CHUNK_HEIGHT - 1);
+			z = std::clamp(z, 0, CHUNK_WIDTH - 1);
+
+		}
+
 	}
 
 	isDirty = true;

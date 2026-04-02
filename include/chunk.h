@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <vector>
 #include <iostream>
-
+#include <algorithm>
 
 struct UVRect {
 	float u0, v0, u1, v1;
@@ -68,5 +68,7 @@ struct Chunk {
 
 		blocks[Index(x, y, z)] = block;
 	}
+
+	void CarveSphere(int cx, int cy, int cz, int radius);
 
 };
