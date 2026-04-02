@@ -60,6 +60,8 @@ struct Chunk {
 	}
 	bool Set(int x, int y, int z, unsigned int block) {
 		if (!inRange(x, y, z)) return false;
+		if (this->Get(x, y, z) != 0) return false;
+
 		blocks[Index(x, y, z)] = block;
 	}
 
