@@ -16,7 +16,7 @@ int main() {
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
 	Game game;
-	game.world.InitRenderer();
+	
 
 	glEnable(GL_DEPTH_TEST);
 

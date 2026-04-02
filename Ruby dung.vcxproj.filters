@@ -106,12 +106,6 @@
     <None Include="include\Ray.h">
       <Filter>ヘッダー ファイル</Filter>
     </None>
-    <None Include="shaders\wireframe.frag">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\wireframe.vert">
-      <Filter>Shaders</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\glfw3.lib">

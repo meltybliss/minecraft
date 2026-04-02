@@ -16,17 +16,13 @@ public:
 	void Tick();
 	void render();
 
-	unsigned int GetBlockGlobal(int wx, int wy, int wz);
+	unsigned int GetBlockGlobal(int bx, int by, int bz);
 	Chunk* GetChunkPtr(int cx, int cz);
 
 	bool SetBlockByRay(Ray& ray, unsigned int block, float maxDist);
-	bool SetBlockGlobal(int wx, int wy, int wz, unsigned int block);
+	bool SetBlockGlobal(int bx, int by, int bz, unsigned int block);
 
 	HitResult TraceRay(Ray& ray, float maxDist);
-
-
-	void InitRenderer();
-	void RenderHighlight(const HitResult& hit);
 
 
 private:

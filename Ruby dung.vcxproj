@@ -163,8 +163,6 @@
     <None Include="include\Ray.h" />
     <None Include="shaders\basic.frag" />
     <None Include="shaders\basic.vert" />
-    <None Include="shaders\wireframe.frag" />
-    <None Include="shaders\wireframe.vert" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\glfw3.lib" />

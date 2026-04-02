@@ -74,17 +74,19 @@ void World::render() {
 }
 
 
-unsigned int World::GetBlockGlobal(int wx, int wy, int wz) {
-	int32_t cx = FloorDiv(wx, Chunk::CHUNK_WIDTH * blockSize);
-	int32_t cz = FloorDiv(wz, Chunk::CHUNK_WIDTH * blockSize);
+unsigned int World::GetBlockGlobal(int bx, int by, int bz) {
+	int32_t cx = FloorDiv(bx, Chunk::CHUNK_WIDTH);
+	int32_t cz = FloorDiv(bz, Chunk::CHUNK_WIDTH);
 
 	uint64_t key = GetChunkKey(cx, cz);
-	if (Chunks.find(key) == Chunks.end()) return 0;
+	auto it = Chunks.find(key);
+	if (it == Chunks.end()) return (unsigned int)BlockType::AIR;
 
-	Chunk* c = Chunks[key].get();
-	int lx = wx - cx * Chunk::CHUNK_WIDTH;
-	int ly = wy;
-	int lz = wz - cz * Chunk::CHUNK_WIDTH;
+	Chunk* c = it->second.get();
+
+	int lx = bx - cx * Chunk::CHUNK_WIDTH;
+	int ly = by;
+	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
 	return c->Get(lx, ly, lz);
 }
@@ -105,21 +107,31 @@ void World::MarkChunkDirty(int32_t cx, int32_t cz) {
 	it->second->isDirty = true;
 }
 
-bool World::SetBlockGlobal(int wx, int wy, int wz, unsigned int block) {
-	int32_t cx = FloorDiv(wx, Chunk::CHUNK_WIDTH * blockSize);
-	int32_t cz = FloorDiv(wz, Chunk::CHUNK_WIDTH * blockSize);
+bool World::SetBlockGlobal(int bx, int by, int bz, unsigned int block) {
+	int32_t cx = FloorDiv(bx, Chunk::CHUNK_WIDTH);
+	int32_t cz = FloorDiv(bz, Chunk::CHUNK_WIDTH);
 
 	uint64_t key = GetChunkKey(cx, cz);
-	if (Chunks.find(key) == Chunks.end()) return false;
+	auto it = Chunks.find(key);
+	if (it == Chunks.end()) return false;
 
-	Chunk* c = Chunks[key].get();
-	int lx = wx - cx * Chunk::CHUNK_WIDTH;
-	int ly = wy;
-	int lz = wz - cz * Chunk::CHUNK_WIDTH;
+	Chunk* c = it->second.get();
+
+	int lx = bx - cx * Chunk::CHUNK_WIDTH;
+	int ly = by;
+	int lz = bz - cz * Chunk::CHUNK_WIDTH;
+
+	bool ok = c->Set(lx, ly, lz, block);
+	if (!ok) return false;
 
 	MarkChunkDirty(cx, cz);
 
-	return c->Set(lx, ly, lz, block);
+	if (lx == 0) MarkChunkDirty(cx - 1, cz);
+	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkDirty(cx + 1, cz);
+	if (lz == 0) MarkChunkDirty(cx, cz - 1);
+	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkDirty(cx, cz + 1);
+
+	return true;
 }
 
 
@@ -133,18 +145,22 @@ bool World::SetBlockByRay(Ray& ray, unsigned int block, float maxDist) {
 
 
 HitResult World::TraceRay(Ray& ray, float maxDist) {
-	//DDA algo
-
 	HitResult hit = { false, {0,0,0}, {0,0,0}, 0.0f };
 
-	int x = std::floor(ray.origin.x);
-	int y = std::floor(ray.origin.y);
-	int z = std::floor(ray.origin.z);
+	Vec3 origin = {
+		ray.origin.x / blockSize,
+		ray.origin.y / blockSize,
+		ray.origin.z / blockSize
+	};
+
+	int x = (int)std::floor(origin.x);
+	int y = (int)std::floor(origin.y);
+	int z = (int)std::floor(origin.z);
 
 	Vec3 deltaDist = {
-		std::abs(1.0f / ray.dir.x),
-		std::abs(1.0f / ray.dir.y),
-		std::abs(1.0f / ray.dir.z)
+		(ray.dir.x == 0.0f) ? 1e30f : std::abs(1.0f / ray.dir.x),
+		(ray.dir.y == 0.0f) ? 1e30f : std::abs(1.0f / ray.dir.y),
+		(ray.dir.z == 0.0f) ? 1e30f : std::abs(1.0f / ray.dir.z)
 	};
 
 	Vec3 sideDist;
@@ -152,35 +168,33 @@ HitResult World::TraceRay(Ray& ray, float maxDist) {
 
 	if (ray.dir.x < 0) {
 		stepX = -1;
-		sideDist.x = (ray.origin.x - x) * deltaDist.x;
+		sideDist.x = (origin.x - x) * deltaDist.x;
 	}
 	else {
 		stepX = 1;
-		sideDist.x = (x + 1.0f - ray.origin.x) * deltaDist.x;
+		sideDist.x = (x + 1.0f - origin.x) * deltaDist.x;
 	}
 
 	if (ray.dir.y < 0) {
 		stepY = -1;
-		sideDist.y = (ray.origin.y - y) * deltaDist.y;
+		sideDist.y = (origin.y - y) * deltaDist.y;
 	}
 	else {
 		stepY = 1;
-		sideDist.y = (y + 1.0f - ray.origin.y) * deltaDist.y;
+		sideDist.y = (y + 1.0f - origin.y) * deltaDist.y;
 	}
 
 	if (ray.dir.z < 0) {
 		stepZ = -1;
-		sideDist.z = (ray.origin.z - z) * deltaDist.z;
+		sideDist.z = (origin.z - z) * deltaDist.z;
 	}
 	else {
 		stepZ = 1;
-		sideDist.z = (z + 1.0f - ray.origin.z) * deltaDist.z;
+		sideDist.z = (z + 1.0f - origin.z) * deltaDist.z;
 	}
 
-
-	//DDA main loop
-	float t = 0;
-	while (t < maxDist) {
+	float t = 0.0f;
+	while (t < maxDist / blockSize) {
 		if (sideDist.x < sideDist.y && sideDist.x < sideDist.z) {
 			t = sideDist.x;
 			sideDist.x += deltaDist.x;
@@ -200,67 +214,14 @@ HitResult World::TraceRay(Ray& ray, float maxDist) {
 			hit.normal = { 0, 0, -(float)stepZ };
 		}
 
-
 		if (GetBlockGlobal(x, y, z) != (unsigned int)BlockType::AIR) {
 			hit.isHit = true;
-			hit.hitPos = { (float)x, (float)y, (float)z };
-			hit.dist = t;
+			hit.hitPos = { (float)x, (float)y, (float)z }; // block座標で返す
+			hit.dist = t * blockSize;                      // world距離に戻す
 			return hit;
 		}
-
-
 	}
 
 	return hit;
-
 }
 
-
-void World::InitRenderer() {
-	selectionShaderProgram = CreateShaderProgram("shaders/wireframe.vert", "shaders/wireframe.frag");
-	float vertices[] = {
-		0,0,0, 1,0,0,  1,0,0, 1,0,1,  1,0,1, 0,0,1,  0,0,1, 0,0,0,
-		0,1,0, 1,1,0,  1,1,0, 1,1,1,  1,1,1, 0,1,1,  0,1,1, 0,1,0,
-		0,0,0, 0,1,0,  1,0,0, 1,1,0,  1,0,1, 1,1,1,  0,0,1, 0,1,1
-	};
-	glGenVertexArrays(1, &highlightVAO);
-	glGenBuffers(1, &highlightVBO);
-	glBindVertexArray(highlightVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, highlightVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glBindVertexArray(0);
-}
-
-
-void World::RenderHighlight(const HitResult& hit) {
-	if (!hit.isHit) return;
-
-	glUseProgram(selectionShaderProgram);
-
-	float s = 1.005f;
-	float o = (s - 1.0f) * 0.5f;
-
-	// hit.hitPos が整数 {x, y, z} であることを前提にする
-	Mat4 translation = Mat4::Translate(Vec3{ hit.hitPos.x - o, hit.hitPos.y - o, hit.hitPos.z - o });
-	Mat4 scaling = Mat4::Scale(Vec3{ s, s, s });
-	Mat4 model = translation * scaling;
-
-	// カメラクラスから取得（mainのPerspective計算と数値を合わせる）
-	Mat4 view = gGame->cam.GetViewMatrix();
-	Mat4 projection = gGame->cam.GetProjectionMatrix();
-
-	glUniformMatrix4fv(glGetUniformLocation(selectionShaderProgram, "model"), 1, GL_FALSE, model.m);
-	glUniformMatrix4fv(glGetUniformLocation(selectionShaderProgram, "view"), 1, GL_FALSE, view.m);
-	glUniformMatrix4fv(glGetUniformLocation(selectionShaderProgram, "projection"), 1, GL_FALSE, projection.m);
-
-	// color を確実に白にする
-	glUniform3f(glGetUniformLocation(selectionShaderProgram, "color"), 1.0f, 1.0f, 1.0f);
-
-	glBindVertexArray(highlightVAO);
-	glLineWidth(2.0f);
-	glDrawArrays(GL_LINES, 0, 24);
-	glBindVertexArray(0);
-	glUseProgram(0); // 念のため解除
-}
