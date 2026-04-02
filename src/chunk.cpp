@@ -33,6 +33,7 @@ void Chunk::CarveSphere(int cx, int cy, int cz, int radius) {
 
 }
 
+#pragma region texture
 static UVRect AtlasUV(int tx, int ty, int cols, int rows) {
 	const float du = 1.0f / cols;
 	const float dv = 1.0f / rows;
@@ -93,25 +94,12 @@ static void AddFaceUV(std::vector<float>& v,
 	AddVertex(v, x3, y3, z3, u0, v1);
 	AddVertex(v, x0, y0, z0, u0, v0);
 }
+#pragma endregion texture
 
 
-void Chunk::generate() {
-	uint32_t chunkSeed = makeChunkSeed(gWorld->getWorldSeed(), cx, cz);
-	std::mt19937 rng(chunkSeed);
 
-
-	int ground = CHUNK_HEIGHT / 2;
-
-	std::uniform_int_distribution<int> xDist(0, CHUNK_WIDTH - 1);
-	std::uniform_int_distribution<int> zDist(0, CHUNK_WIDTH - 1);
-	std::uniform_int_distribution<int> stoneYDist(0, ground - 4);
-	std::uniform_int_distribution<int> radiusDist(2, 4);
-	std::uniform_int_distribution<int> chance1000(0, 999);
-	std::uniform_int_distribution<int> dirDist(0, 5);
-	std::uniform_int_distribution<int> oreStartYDist(3, ground - 4);
-	std::uniform_int_distribution<int> caveStartYDist(8, ground - 1);
-
-
+#pragma region ChunkGenerationFuncs 
+void Chunk::FillBaseDirt(int ground) {
 	for (int y = 0; y < CHUNK_HEIGHT; y++) {
 		for (int z = 0; z < CHUNK_WIDTH; z++) {
 			for (int x = 0; x < CHUNK_WIDTH; x++) {
@@ -120,16 +108,24 @@ void Chunk::generate() {
 				if (y <= ground) {
 					b = BlockType::Dirt;
 				}
-				
+
 
 				blocks[Index(x, y, z)] = static_cast<unsigned int>(b);
 			}
 		}
 	}
+}
 
+void Chunk::GenerateStoneBlobs(std::mt19937& rng, int ground) {
 	//mix stones into chunk
+
+	std::uniform_int_distribution<int> xDist(0, CHUNK_WIDTH - 1);
+	std::uniform_int_distribution<int> zDist(0, CHUNK_WIDTH - 1);
+	std::uniform_int_distribution<int> stoneYDist(0, ground - 4);
+	std::uniform_int_distribution<int> radiusDist(2, 4);
+
 	for (int i = 0; i < 8; i++) {
-		
+
 		int centerX = xDist(rng);
 		int centerY = stoneYDist(rng);
 		int centerZ = zDist(rng);
@@ -155,9 +151,12 @@ void Chunk::generate() {
 		}
 
 	}
+}
 
+void Chunk::ScatterOre(std::mt19937& rng, int ground) {
 	//slitly mix ore into mass of stones
-	
+	std::uniform_int_distribution<int> chance1000(0, 999);
+
 	for (int z = 0; z < CHUNK_WIDTH; z++) {
 		for (int y = 0; y < CHUNK_HEIGHT; y++) {
 			for (int x = 0; x < CHUNK_WIDTH; x++) {
@@ -170,9 +169,16 @@ void Chunk::generate() {
 			}
 		}
 	}
+}
 
-
+void Chunk::GenerateOreVein(std::mt19937& rng, int ground) {
 	//ore vein RandomWalk
+	std::uniform_int_distribution<int> xDist(0, CHUNK_WIDTH - 1);
+	std::uniform_int_distribution<int> zDist(0, CHUNK_WIDTH - 1);
+	std::uniform_int_distribution<int> oreStartYDist(3, ground - 4);
+	std::uniform_int_distribution<int> dirDist(0, 5);
+
+
 	{
 		int x = xDist(rng);
 		int y = oreStartYDist(rng);
@@ -190,7 +196,7 @@ void Chunk::generate() {
 			if (dir == 3) y--;
 			if (dir == 4) z++;
 			if (dir == 5) z--;
-				 
+
 			x = std::clamp(x, 0, CHUNK_WIDTH - 1);
 			y = std::clamp(y, 0, CHUNK_HEIGHT - 1);
 			z = std::clamp(z, 0, CHUNK_WIDTH - 1);
@@ -198,8 +204,16 @@ void Chunk::generate() {
 		}
 
 	}
+}
+
+
+void Chunk::GenerateCave(std::mt19937& rng, int ground) {
 
 	//cave RandomWalk
+	std::uniform_int_distribution<int> xDist(0, CHUNK_WIDTH - 1);
+	std::uniform_int_distribution<int> zDist(0, CHUNK_WIDTH - 1);
+	std::uniform_int_distribution<int> dirDist(0, 5);
+	std::uniform_int_distribution<int> caveStartYDist(8, ground - 1);
 	{
 		int x = xDist(rng);
 		int y = caveStartYDist(rng);
@@ -223,6 +237,20 @@ void Chunk::generate() {
 		}
 
 	}
+}
+#pragma endregion ChunkGenerationFuncs
+
+void Chunk::generate() {
+	uint32_t chunkSeed = makeChunkSeed(gWorld->getWorldSeed(), cx, cz);
+	std::mt19937 rng(chunkSeed);
+
+	int ground = CHUNK_HEIGHT / 2;
+
+	FillBaseDirt(ground);
+	GenerateStoneBlobs(rng, ground);
+	ScatterOre(rng, ground);
+	GenerateOreVein(rng, ground);
+	GenerateCave(rng, ground);
 
 	isDirty = true;
 
