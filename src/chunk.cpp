@@ -8,29 +8,13 @@ Chunk::~Chunk() {
 }
 
 static UVRect AtlasUV(int tx, int ty, int cols, int rows) {
-	const float atlasW = 256.0f;
-	const float atlasH = 620.0f;
+	const float du = 1.0f / cols;
+	const float dv = 1.0f / rows;
 
-	const float tileW = atlasW / cols;   // 64
-	const float tileH = atlasH / rows;   // 62
-
-	int flippedTy = rows - 1 - ty;
-
-	float px0 = tx * tileW;
-	float py0 = flippedTy * tileH;
-	float px1 = px0 + tileW;
-	float py1 = py0 + tileH;
-
-	// 0.5 pixel ‚¾‚¯“à‘¤‚Ö
-	px0 += 0.5f;
-	py0 += 0.5f;
-	px1 -= 0.5f;
-	py1 -= 0.5f;
-
-	float u0 = px0 / atlasW;
-	float v0 = py0 / atlasH;
-	float u1 = px1 / atlasW;
-	float v1 = py1 / atlasH;
+	float u0 = tx * du;
+	float v0 = ty * dv;
+	float u1 = u0 + du;
+	float v1 = v0 + dv;
 
 	return { u0, v0, u1, v1 };
 }
@@ -41,14 +25,14 @@ static UVRect GetBlockUV(unsigned int block, FaceType face) {
 	const unsigned int STONE = static_cast<unsigned int>(BlockType::Stone);
 
 	if (block == DIRT) {
-		return AtlasUV(2, 6, 4, 10); // dirt
+		return AtlasUV(2, 3, 4, 5); // dirt
 	}
 
 	if (block == STONE) {
-		return AtlasUV(1, 1, 4, 10); // stone
+		return AtlasUV(1, 1, 4, 5); // stone
 	}
 
-	return AtlasUV(0, 1, 4, 10);
+	return AtlasUV(0, 1, 4, 5);
 }
 
 static void AddVertex(std::vector<float>& v,

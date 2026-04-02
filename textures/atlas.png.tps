@@ -80,9 +80,9 @@
         <key>maxTextureSize</key>
         <QSize>
             <key>width</key>
-            <int>1024</int>
+            <int>512</int>
             <key>height</key>
-            <int>1024</int>
+            <int>512</int>
         </QSize>
         <key>fixedTextureSize</key>
         <QSize>
@@ -173,40 +173,6 @@
         </struct>
         <key>individualSpriteSettings</key>
         <map type="IndividualSpriteSettingsMap">
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_back_blue.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_back_red.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_front_blue.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_front_red.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_left_blue.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_left_red.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_right_blue.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_right_red.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_top_blue.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_top_red.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_home_red.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_jump.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_jump_top.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_ladder.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_ladder_top.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_spikes.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_teleporter_a.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_teleporter_b.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_teleporter_bottom.png</key>
-            <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_teleporter_top.png</key>
-            <struct type="IndividualSpriteSettings">
-                <key>pivotPoint</key>
-                <point_f>0.5,0.5</point_f>
-                <key>spriteScale</key>
-                <double>1</double>
-                <key>scale9Enabled</key>
-                <false/>
-                <key>scale9Borders</key>
-                <rect>15,15,30,30</rect>
-                <key>scale9Paddings</key>
-                <rect>15,15,30,30</rect>
-                <key>scale9FromFile</key>
-                <false/>
-            </struct>
             <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_blue.png</key>
             <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_red.png</key>
             <key type="filename">../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_beacon_top_blue.png</key>
@@ -248,18 +214,8 @@
             <struct type="SpriteSheet">
                 <key>files</key>
                 <array>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_back_blue.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_back_red.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_blue.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_front_blue.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_front_red.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_left_blue.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_left_red.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_red.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_right_blue.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_right_red.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_top_blue.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_bank_top_red.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_beacon_top_blue.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_beacon_top_red.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_blue.png</filename>
@@ -267,12 +223,7 @@
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_dirt.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_dirt_sign.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_explosive.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_home_red.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_home_top.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_jump.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_jump_top.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_ladder.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_ladder_top.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_lava.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_mechanism.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_metal.png</filename>
@@ -281,11 +232,6 @@
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_road.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_rock.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_silver.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_spikes.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_teleporter_a.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_teleporter_b.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_teleporter_bottom.png</filename>
-                    <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_teleporter_top.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_trans_blue.png</filename>
                     <filename>../../../../Downloads/PC _ Computer - Infiniminer - Miscellaneous - Blocks/Infiniminer/block/tex_block_trans_red.png</filename>
                 </array>
