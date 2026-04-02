@@ -80,4 +80,11 @@ struct Chunk {
 	void GenerateOreVein(std::mt19937& rng, int ground);
 	void GenerateCave(std::mt19937& rng, int ground);
 
+
+	static constexpr int STONE_BLOB_COUNT = 8;
+	static constexpr int ORE_SCATTER_PER_1000 = 20;
+	static constexpr int ORE_VEIN_STEPS = 30;
+	static constexpr int CAVE_STEPS = 50;
+	static constexpr int CAVE_RADIUS = 2;
+
 };

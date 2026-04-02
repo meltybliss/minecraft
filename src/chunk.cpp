@@ -124,7 +124,7 @@ void Chunk::GenerateStoneBlobs(std::mt19937& rng, int ground) {
 	std::uniform_int_distribution<int> stoneYDist(0, ground - 4);
 	std::uniform_int_distribution<int> radiusDist(2, 4);
 
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < STONE_BLOB_COUNT; i++) {
 
 		int centerX = xDist(rng);
 		int centerY = stoneYDist(rng);
@@ -162,7 +162,7 @@ void Chunk::ScatterOre(std::mt19937& rng, int ground) {
 			for (int x = 0; x < CHUNK_WIDTH; x++) {
 
 				if (this->Get(x, y, z) == static_cast<unsigned int>(BlockType::Stone)) {
-					if (chance1000(rng) < 20) {//2%
+					if (chance1000(rng) < ORE_SCATTER_PER_1000) {//2%
 						this->Set(x, y, z, (unsigned int)BlockType::Ore);
 					}
 				}
@@ -184,7 +184,7 @@ void Chunk::GenerateOreVein(std::mt19937& rng, int ground) {
 		int y = oreStartYDist(rng);
 		int z = zDist(rng);
 
-		for (int i = 0; i < 30; i++) {
+		for (int i = 0; i < ORE_VEIN_STEPS; i++) {
 			if (Get(x, y, z) == (unsigned int)BlockType::Stone) {
 				Set(x, y, z, (unsigned int)BlockType::Ore);
 			}
@@ -219,8 +219,8 @@ void Chunk::GenerateCave(std::mt19937& rng, int ground) {
 		int y = caveStartYDist(rng);
 		int z = zDist(rng);
 
-		for (int i = 0; i < 50; i++) {
-			CarveSphere(x, y, z, 2);
+		for (int i = 0; i < CAVE_STEPS; i++) {
+			CarveSphere(x, y, z, CAVE_RADIUS);
 
 			int dir = dirDist(rng);
 			if (dir == 0) x++;
