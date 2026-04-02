@@ -3,7 +3,7 @@
 #include "GLFW/glfw3.h"
 #include "world.h"
 #include "camera.h"
-
+#include <iostream>
 
 class Game {
 public:

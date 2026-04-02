@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <stdint.h>
 #include <cmath>
-
+#include "HitResult.h"
 class World {
 public:
 	World();
@@ -16,7 +16,7 @@ public:
 	unsigned int GetBlockGlobal(int wx, int wy, int wz);
 	Chunk* GetChunkPtr(int cx, int cz);
 
-	bool SetBlockByRay(Ray& ray, float maxDist);
+	bool SetBlockByRay(Ray& ray, unsigned int block, float maxDist);
 private:
 
 	int RENDER_DISTANCE = 2;
@@ -34,6 +34,8 @@ private:
 
 	void MarkChunkDirty(int32_t cx, int32_t cz);
 	bool SetBlockGlobal(int wx, int wy, int wz, unsigned int block);
+
+	HitResult TraceRay(Ray& ray, float maxDist);
 };
 
 extern World* gWorld;

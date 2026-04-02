@@ -3,16 +3,7 @@
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 #include "Vec3.h"
-
-struct Ray {
-	Vec3 origin;
-	Vec3 dir;
-
-	Vec3 At(float t) const {
-		return origin + dir * t;
-	}
-
-};
+#include "Ray.h"
 
 
 inline float Length(const Vec3& v) {

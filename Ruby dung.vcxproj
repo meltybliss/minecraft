@@ -158,6 +158,7 @@
     <ClInclude Include="include\world.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="include\Ray.h" />
     <None Include="shaders\basic.frag" />
     <None Include="shaders\basic.vert" />
   </ItemGroup>

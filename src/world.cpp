@@ -117,10 +117,100 @@ bool World::SetBlockGlobal(int wx, int wy, int wz, unsigned int block) {
 	int ly = wy;
 	int lz = wz - cz * Chunk::CHUNK_WIDTH;
 
+	MarkChunkDirty(cx, cz);
+
 	return c->Set(lx, ly, lz, block);
 }
 
 
-bool World::SetBlockByRay(Ray& ray, float maxDist) {
+bool World::SetBlockByRay(Ray& ray, unsigned int block, float maxDist) {
+	HitResult hit = TraceRay(ray, maxDist);
+	if (!hit.isHit) return false;
+
+	return this->SetBlockGlobal(hit.hitPos.x, hit.hitPos.y, hit.hitPos.z, block);
+	
+}
+
+
+HitResult World::TraceRay(Ray& ray, float maxDist) {
+	//DDA algo
+
+	HitResult hit = { false, {0,0,0}, {0,0,0}, 0.0f };
+
+	int x = std::floor(ray.origin.x);
+	int y = std::floor(ray.origin.y);
+	int z = std::floor(ray.origin.z);
+
+	Vec3 deltaDist = {
+		std::abs(1.0f / ray.dir.x),
+		std::abs(1.0f / ray.dir.y),
+		std::abs(1.0f / ray.dir.z)
+	};
+
+	Vec3 sideDist;
+	int stepX, stepY, stepZ;
+
+	if (ray.dir.x < 0) {
+		stepX = -1;
+		sideDist.x = (ray.origin.x - x) * deltaDist.x;
+	}
+	else {
+		stepX = 1;
+		sideDist.x = (x + 1.0f - ray.origin.x) * deltaDist.x;
+	}
+
+	if (ray.dir.y < 0) {
+		stepY = -1;
+		sideDist.y = (ray.origin.y - y) * deltaDist.y;
+	}
+	else {
+		stepY = 1;
+		sideDist.y = (y + 1.0f - ray.origin.y) * deltaDist.y;
+	}
+
+	if (ray.dir.z < 0) {
+		stepZ = -1;
+		sideDist.z = (ray.origin.z - z) * deltaDist.z;
+	}
+	else {
+		stepZ = 1;
+		sideDist.z = (z + 1.0f - ray.origin.z) * deltaDist.z;
+	}
+
+
+	//DDA main loop
+	float t = 0;
+	while (t < maxDist) {
+		if (sideDist.x < sideDist.y && sideDist.x < sideDist.z) {
+			t = sideDist.x;
+			sideDist.x += deltaDist.x;
+			x += stepX;
+			hit.normal = { -(float)stepX, 0, 0 };
+		}
+		else if (sideDist.y < sideDist.z) {
+			t = sideDist.y;
+			sideDist.y += deltaDist.y;
+			y += stepY;
+			hit.normal = { 0, -(float)stepY, 0 };
+		}
+		else {
+			t = sideDist.z;
+			sideDist.z += deltaDist.z;
+			z += stepZ;
+			hit.normal = { 0, 0, -(float)stepZ };
+		}
+
+
+		if (GetBlockGlobal(x, y, z) != (unsigned int)BlockType::AIR) {
+			hit.isHit = true;
+			hit.hitPos = ray.At(t);
+			hit.dist = t;
+			return hit;
+		}
+
+
+	}
+
+	return hit;
 
 }

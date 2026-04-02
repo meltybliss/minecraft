@@ -13,6 +13,14 @@ Game::Game() {
 
 void Game::Tick(float deltaTime) {
 	UpdateCameraMovement(glfwGetCurrentContext(), cam, deltaTime);
+
+	if (glfwGetMouseButton(glfwGetCurrentContext(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+
+		Ray ray = cam.GetRay(0.5f, 0.5f);
+		world.SetBlockByRay(ray, 0, 5.0f);
+		
+	};
+
 	world.Tick();
 }
 
