@@ -23,6 +23,7 @@ static UVRect GetBlockUV(unsigned int block, FaceType face) {
 	
 	const unsigned int DIRT = static_cast<unsigned int>(BlockType::Dirt);
 	const unsigned int STONE = static_cast<unsigned int>(BlockType::Stone);
+	const unsigned int ORE = static_cast<unsigned int>(BlockType::Ore);
 
 	if (block == DIRT) {
 		return AtlasUV(2, 3, 4, 5); // dirt
@@ -30,6 +31,10 @@ static UVRect GetBlockUV(unsigned int block, FaceType face) {
 
 	if (block == STONE) {
 		return AtlasUV(0, 0, 4, 5); // stone
+	}
+
+	if (block == ORE) {
+		return AtlasUV(1, 1, 4, 5);
 	}
 
 	return AtlasUV(0, 1, 4, 5);
@@ -83,6 +88,7 @@ void Chunk::generate() {
 		}
 	}
 
+	//mix stones into chunk
 	for (int i = 0; i < 8; i++) {
 		int cx = rand() % CHUNK_WIDTH;
 		int cy = rand() % (ground + 1);
@@ -107,6 +113,20 @@ void Chunk::generate() {
 			}
 		}
 
+	}
+
+	//slitly mix ore into mass of stones
+	for (int z = 0; z < CHUNK_WIDTH; z++) {
+		for (int y = 0; y < CHUNK_HEIGHT; y++) {
+			for (int x = 0; x < CHUNK_WIDTH; x++) {
+
+				if (this->Get(x, y, z) == static_cast<unsigned int>(BlockType::Stone)) {
+					if ((rand() % 1000) < 20) {//2%
+						this->Set(x, y, z, (unsigned int)BlockType::Ore);
+					}
+				}
+			}
+		}
 	}
 
 	isDirty = true;
