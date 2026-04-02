@@ -21,7 +21,9 @@ void Game::Tick(float deltaTime) {
 	lastHit = world.TraceRay(ray, 5.0f);
 
 	static bool prevLeftDown = false;
+	static bool prevRightDown = false;
 	bool leftDown = glfwGetMouseButton(glfwGetCurrentContext(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+	bool rightDown = glfwGetMouseButton(glfwGetCurrentContext(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
 
 	if (leftDown && !prevLeftDown) {
 		if (lastHit.isHit) {
@@ -32,7 +34,19 @@ void Game::Tick(float deltaTime) {
 		}
 	}
 
+	if (rightDown && !prevRightDown) {
+		if (lastHit.isHit) {
+
+			int nx = static_cast<int>(std::floor(lastHit.hitPos.x + lastHit.normal.x));
+			int ny = static_cast<int>(std::floor(lastHit.hitPos.y + lastHit.normal.y));
+			int nz = static_cast<int>(std::floor(lastHit.hitPos.z + lastHit.normal.z));
+
+			world.SetBlockGlobal(nx, ny, nz, (unsigned int)BlockType::Dirt);
+		}
+	}
+
 	prevLeftDown = leftDown;
+	prevRightDown = rightDown;
 
 	world.Tick();
 }
