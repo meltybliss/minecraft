@@ -102,12 +102,12 @@ AABB Player::GetAABBAt(const Vec3& p) const {
 
 
 bool Player::IntersectsSolidBlock(const AABB& box) {
-    int minX = box.min.x;
-    int maxX = box.max.x;
-    int minY = box.min.y;
-    int maxY = box.max.y;
-    int minZ = box.min.z;
-    int maxZ = box.max.z;
+    int minX = (int)std::floor(box.min.x);
+    int maxX = (int)std::floor(box.max.x);
+    int minY = (int)std::floor(box.min.y);
+    int maxY = (int)std::floor(box.max.y);
+    int minZ = (int)std::floor(box.min.z);
+    int maxZ = (int)std::floor(box.max.z);
 
     for (int y = minY; y <= maxY; y++) {
         for (int z = minZ; z <= maxZ; z++) {
