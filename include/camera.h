@@ -2,38 +2,16 @@
 #include <cmath>
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
-struct Vec3 {
-	float x, y, z;
+#include "Vec3.h"
 
-	Vec3 operator+(const Vec3& other) const {
-		return { x + other.x, y + other.y, z + other.z };
+struct Ray {
+	Vec3 origin;
+	Vec3 dir;
+
+	Vec3 At(float t) const {
+		return origin + dir * t;
 	}
 
-	Vec3 operator-(const Vec3& other) const {
-		return { x - other.x, y - other.y, z - other.z };
-	}
-
-	Vec3 operator*(const Vec3& other) const {
-		return { x * other.x, y * other.y, z * other.z };
-	}
-
-	Vec3 operator*(float s) const {
-		return { x * s, y * s, z * s };
-	}
-
-	Vec3& operator+=(const Vec3& other) {
-		x += other.x;
-		y += other.y;
-		z += other.z;
-		return *this;
-	}
-
-	Vec3& operator-=(const Vec3& other) {
-		x -= other.x;
-		y -= other.y;
-		z -= other.z;
-		return *this;
-	}
 };
 
 
@@ -68,6 +46,10 @@ struct Camera {
 	Vec3 right{ 1.0f, 0.0f, 0.0f };
 	Vec3 up{ 0.0f, 1.0f, 0.0f };
 
+	Vec3 lowerLeftCorner;
+	Vec3 horizontal;
+	Vec3 vertical;
+
 	void UpdateVectors() {
 		const float radYaw = yaw * 3.14159265f / 180.0f;
 		const float radPitch = pitch * 3.14159265f / 180.0f;
@@ -80,9 +62,25 @@ struct Camera {
 		Vec3 worldUp{ 0.0f, 1.0f, 0.0f };
 		right = Normalize(Cross(forward, worldUp));
 		up = Normalize(Cross(right, forward));
+
+		//raycast
+		float aspect_ratio = 16.0f / 9.0f; // 画面比率
+		float viewport_height = 2.0f;     // 仮想視界の高さ
+		float viewport_width = aspect_ratio * viewport_height;
+		float focal_length = 1.0f;        // 焦点距離
+
+		// カメラが向いている方向に基づいた水平・垂直ベクトル
+		horizontal = right * viewport_width;
+		vertical = up * viewport_height;
+
+		// スクリーンの左下隅の座標を計算
+		// pos - (横/2) - (縦/2) + (前方向 * 距離)
+		lowerLeftCorner = pos - (horizontal * 0.5f) - (vertical * 0.5f) + (forward * focal_length);
 	}
 
-
+	Ray GetRay(float u, float v) const {
+		return { pos, Normalize(lowerLeftCorner + (horizontal * u) + (vertical * v) - pos) };
+	}
 };
 
 void UpdateCameraMovement(GLFWwindow* window, Camera& cam, float deltaTime);

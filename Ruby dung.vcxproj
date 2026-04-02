@@ -153,6 +153,7 @@
     <ClInclude Include="include\Mat4.h" />
     <ClInclude Include="include\stb_image.h" />
     <ClInclude Include="include\texture.h" />
+    <ClInclude Include="include\Vec3.h" />
     <ClInclude Include="include\world.h" />
   </ItemGroup>
   <ItemGroup>

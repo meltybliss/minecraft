@@ -72,15 +72,10 @@ void Chunk::generate() {
 
 				int ground = CHUNK_HEIGHT / 2;
 
-				if (y == ground) {
+				if (y <= ground) {
 					b = BlockType::Dirt;
 				}
-				else if (y < ground && y > ground - 6) {
-					b = BlockType::Dirt;
-				}
-				else if (y <= ground - 6) {
-					b = BlockType::Stone;
-				}
+				
 
 				blocks[Index(x, y, z)] = static_cast<unsigned int>(b);
 			}
