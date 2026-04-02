@@ -8,7 +8,7 @@ static int32_t FloorDiv(int v, int b) {
 	return static_cast<int32_t>(std::floor(static_cast<float>(v) / b));
 }
 
-World::World() {
+World::World() : worldSeed(123456789u) {
 	gWorld = this;
 }
 

@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <random>
 
 struct UVRect {
 	float u0, v0, u1, v1;
@@ -70,5 +71,7 @@ struct Chunk {
 	}
 
 	void CarveSphere(int cx, int cy, int cz, int radius);
+
+	static uint32_t makeChunkSeed(uint32_t worldSeed, int cx, int cz);
 
 };

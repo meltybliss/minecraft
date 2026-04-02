@@ -7,6 +7,12 @@ Chunk::~Chunk() {
 
 }
 
+uint32_t Chunk::makeChunkSeed(uint32_t worldSeed, int cx, int cz) {
+	uint32_t x = static_cast<uint32_t>(cx) * 73856093u;
+	uint32_t z = static_cast<uint32_t>(cz) * 19349663u;
+	return worldSeed ^ x ^ z;
+}
+
 
 void Chunk::CarveSphere(int cx, int cy, int cz, int radius) {
 	for (int z = 0; z < CHUNK_WIDTH; z++) {
@@ -90,8 +96,21 @@ static void AddFaceUV(std::vector<float>& v,
 
 
 void Chunk::generate() {
+	uint32_t chunkSeed = makeChunkSeed(gWorld->getWorldSeed(), cx, cz);
+	std::mt19937 rng(chunkSeed);
+
 
 	int ground = CHUNK_HEIGHT / 2;
+
+	std::uniform_int_distribution<int> xDist(0, CHUNK_WIDTH - 1);
+	std::uniform_int_distribution<int> zDist(0, CHUNK_WIDTH - 1);
+	std::uniform_int_distribution<int> stoneYDist(0, ground - 4);
+	std::uniform_int_distribution<int> radiusDist(2, 4);
+	std::uniform_int_distribution<int> chance1000(0, 999);
+	std::uniform_int_distribution<int> dirDist(0, 5);
+	std::uniform_int_distribution<int> oreStartYDist(3, ground - 4);
+	std::uniform_int_distribution<int> caveStartYDist(8, ground - 1);
+
 
 	for (int y = 0; y < CHUNK_HEIGHT; y++) {
 		for (int z = 0; z < CHUNK_WIDTH; z++) {
@@ -110,18 +129,20 @@ void Chunk::generate() {
 
 	//mix stones into chunk
 	for (int i = 0; i < 8; i++) {
-		int cx = rand() % CHUNK_WIDTH;
-		int cy = rand() % (ground - 4);
-		int cz = rand() % CHUNK_WIDTH;
-		int radius = 2 + rand() % 3;
+		
+		int centerX = xDist(rng);
+		int centerY = stoneYDist(rng);
+		int centerZ = zDist(rng);
+
+		int radius = radiusDist(rng);
 
 		for (int z = 0; z < CHUNK_WIDTH; z++) {
 			for (int y = 0; y < CHUNK_HEIGHT; y++) {
 				for (int x = 0; x < CHUNK_WIDTH; x++) {
 
-					int dx = x - cx;
-					int dy = y - cy;
-					int dz = z - cz;
+					int dx = x - centerX;
+					int dy = y - centerY;
+					int dz = z - centerZ;
 
 					if (dx * dx + dy * dy + dz * dz <= radius * radius) {
 						if (this->Get(x, y, z) != 0) {
@@ -136,12 +157,13 @@ void Chunk::generate() {
 	}
 
 	//slitly mix ore into mass of stones
+	
 	for (int z = 0; z < CHUNK_WIDTH; z++) {
 		for (int y = 0; y < CHUNK_HEIGHT; y++) {
 			for (int x = 0; x < CHUNK_WIDTH; x++) {
 
 				if (this->Get(x, y, z) == static_cast<unsigned int>(BlockType::Stone)) {
-					if ((rand() % 1000) < 20) {//2%
+					if (chance1000(rng) < 20) {//2%
 						this->Set(x, y, z, (unsigned int)BlockType::Ore);
 					}
 				}
@@ -152,16 +174,16 @@ void Chunk::generate() {
 
 	//ore vein RandomWalk
 	{
-		int x = rand() % CHUNK_WIDTH;
-		int y = 3 + rand() % (ground - 6);
-		int z = rand() % CHUNK_WIDTH;
+		int x = xDist(rng);
+		int y = oreStartYDist(rng);
+		int z = zDist(rng);
 
 		for (int i = 0; i < 30; i++) {
 			if (Get(x, y, z) == (unsigned int)BlockType::Stone) {
 				Set(x, y, z, (unsigned int)BlockType::Ore);
 			}
 
-			int dir = rand() % 6;
+			int dir = dirDist(rng);
 			if (dir == 0) x++;
 			if (dir == 1) x--;
 			if (dir == 2) y++;
@@ -179,14 +201,14 @@ void Chunk::generate() {
 
 	//cave RandomWalk
 	{
-		int x = rand() % CHUNK_WIDTH;
-		int y = 8 + rand() % (ground - 6);
-		int z = rand() % CHUNK_WIDTH;
+		int x = xDist(rng);
+		int y = caveStartYDist(rng);
+		int z = zDist(rng);
 
 		for (int i = 0; i < 50; i++) {
 			CarveSphere(x, y, z, 2);
 
-			int dir = rand() % 6;
+			int dir = dirDist(rng);
 			if (dir == 0) x++;
 			if (dir == 1) x--;
 			if (dir == 2) y++;

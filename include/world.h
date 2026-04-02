@@ -24,14 +24,15 @@ public:
 
 	HitResult TraceRay(Ray& ray, float maxDist);
 
+	uint32_t getWorldSeed() const { return worldSeed; }
 
 private:
 
+	uint32_t worldSeed;
+
 	int RENDER_DISTANCE = 2;
 	int UNLOAD_DISTANCE = 4;
-
-	GLuint highlightVAO, highlightVBO;
-	GLuint selectionShaderProgram;
+	 
 
 	std::unordered_map<uint64_t, std::unique_ptr<Chunk>> Chunks;
 
