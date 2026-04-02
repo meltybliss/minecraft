@@ -13,7 +13,6 @@ void Player::UpdatePlrMovement(GLFWwindow* window, float dt) {
 	Vec3 forward = cam.forward;
 	forward.y = 0.0f;
 
-    grounded = false;
 
 	if (Length(forward) > 0.0f) forward = Normalize(forward);
 
@@ -24,6 +23,8 @@ void Player::UpdatePlrMovement(GLFWwindow* window, float dt) {
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) move = move - forward;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) move = move - right;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) move = move + right;
+
+    if (grounded && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) { vel.y = jmpPower; grounded = false; }
 
     if (Length(move) > 0.0f) move = Normalize(move);
 

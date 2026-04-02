@@ -47,6 +47,7 @@ private:
 
 	float walkSpeed = 5.0f;
 	float gravity = -20.0f;
+	float jmpPower = 10.0f;
 
 
 	Camera cam;
