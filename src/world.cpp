@@ -14,7 +14,7 @@ World::World() : worldSeed(123456789u) {
 
 void World::Tick() {
 
-	Vec3 pos = gGame->cam.pos;
+	Vec3 pos = gGame->GetPlayer().getPos();
 	float chunkWorldSize = static_cast<float>(Chunk::CHUNK_WIDTH * blockSize);
 
 	int32_t curCx = static_cast<int32_t>(std::floor(pos.x / chunkWorldSize));

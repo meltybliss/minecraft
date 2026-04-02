@@ -1,5 +1,5 @@
 #include "camera.h"
-
+#include "game.h"
 void UpdateCameraMovement(GLFWwindow* window, Camera& cam, float deltaTime) {
 	float speed = 10.0f * deltaTime;
 
@@ -33,8 +33,7 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	static double lastX = 400.0;
 	static double lastY = 300.0;
 
-	Camera* cam = reinterpret_cast<Camera*>(glfwGetWindowUserPointer(window));
-	if (!cam) return;
+	if (!gGame) return;
 
 	if (firstMouse) {
 		lastX = xpos;
@@ -48,15 +47,5 @@ void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	lastX = xpos;
 	lastY = ypos;
 
-	float sensitivity = 0.1f;
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	cam->yaw += xoffset;
-	cam->pitch += yoffset;
-
-	if (cam->pitch > 89.0f) cam->pitch = 89.0f;
-	if (cam->pitch < -89.0f) cam->pitch = -89.0f;
-
-	cam->UpdateVectors();
+	gGame->GetPlayer().OnMouseMove(xoffset, yoffset);
 }

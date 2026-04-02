@@ -58,10 +58,12 @@ int main() {
 
 		glUniform1i(texLoc, 0);
 
-		Vec3 eye = game.cam.pos;
-		Vec3 center = game.cam.pos + game.cam.forward;
+		const Camera& cam = game.GetPlayer().GetCamera();
 
-		Mat4 view = LookAt(eye, center, game.cam.up);
+		Vec3 eye = cam.pos;
+		Vec3 center = cam.pos + cam.forward;
+
+		Mat4 view = LookAt(eye, center, cam.up);
 		Mat4 proj = Perspective(70.0f, 800.0f / 600.0f, 0.1f, 1000.0f);
 
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.m);

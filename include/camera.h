@@ -87,4 +87,6 @@ struct Camera {
 };
 
 void UpdateCameraMovement(GLFWwindow* window, Camera& cam, float deltaTime);
+
+
 void MouseCallback(GLFWwindow* window, double xpos, double ypos);
