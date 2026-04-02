@@ -29,7 +29,7 @@ static UVRect GetBlockUV(unsigned int block, FaceType face) {
 	}
 
 	if (block == STONE) {
-		return AtlasUV(1, 1, 4, 5); // stone
+		return AtlasUV(0, 0, 4, 5); // stone
 	}
 
 	return AtlasUV(0, 1, 4, 5);
@@ -65,12 +65,13 @@ static void AddFaceUV(std::vector<float>& v,
 
 
 void Chunk::generate() {
+
+	int ground = CHUNK_HEIGHT / 2;
+
 	for (int y = 0; y < CHUNK_HEIGHT; y++) {
 		for (int z = 0; z < CHUNK_WIDTH; z++) {
 			for (int x = 0; x < CHUNK_WIDTH; x++) {
 				BlockType b = BlockType::AIR;
-
-				int ground = CHUNK_HEIGHT / 2;
 
 				if (y <= ground) {
 					b = BlockType::Dirt;
@@ -80,6 +81,32 @@ void Chunk::generate() {
 				blocks[Index(x, y, z)] = static_cast<unsigned int>(b);
 			}
 		}
+	}
+
+	for (int i = 0; i < 8; i++) {
+		int cx = rand() % CHUNK_WIDTH;
+		int cy = rand() % (ground + 1);
+		int cz = rand() % CHUNK_WIDTH;
+		int radius = 2 + rand() % 3;
+
+		for (int z = 0; z < CHUNK_WIDTH; z++) {
+			for (int y = 0; y < CHUNK_HEIGHT; y++) {
+				for (int x = 0; x < CHUNK_WIDTH; x++) {
+
+					int dx = x - cx;
+					int dy = y - cy;
+					int dz = z - cz;
+
+					if (dx * dx + dy * dy + dz * dz <= radius * radius) {
+						if (this->Get(x, y, z) != 0) {
+							this->Set(x, y, z, static_cast<unsigned int>(BlockType::Stone));
+						}
+					}
+
+				}
+			}
+		}
+
 	}
 
 	isDirty = true;
