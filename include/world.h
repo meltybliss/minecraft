@@ -1,9 +1,11 @@
 #pragma once
 #include "chunk.h"
+#include "camera.h"
 #include <memory>
 #include <unordered_map>
 #include <stdint.h>
 #include <cmath>
+
 class World {
 public:
 	World();
@@ -13,6 +15,8 @@ public:
 
 	unsigned int GetBlockGlobal(int wx, int wy, int wz);
 	Chunk* GetChunkPtr(int cx, int cz);
+
+	bool SetBlockByRay(Ray& ray, float maxDist);
 private:
 
 	int RENDER_DISTANCE = 2;
@@ -29,6 +33,7 @@ private:
 
 
 	void MarkChunkDirty(int32_t cx, int32_t cz);
+	bool SetBlockGlobal(int wx, int wy, int wz, unsigned int block);
 };
 
 extern World* gWorld;

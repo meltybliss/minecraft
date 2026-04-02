@@ -104,3 +104,23 @@ void World::MarkChunkDirty(int32_t cx, int32_t cz) {
 	
 	it->second->isDirty = true;
 }
+
+bool World::SetBlockGlobal(int wx, int wy, int wz, unsigned int block) {
+	int32_t cx = FloorDiv(wx, Chunk::CHUNK_WIDTH * blockSize);
+	int32_t cz = FloorDiv(wz, Chunk::CHUNK_WIDTH * blockSize);
+
+	uint64_t key = GetChunkKey(cx, cz);
+	if (Chunks.find(key) == Chunks.end()) return false;
+
+	Chunk* c = Chunks[key].get();
+	int lx = wx - cx * Chunk::CHUNK_WIDTH;
+	int ly = wy;
+	int lz = wz - cz * Chunk::CHUNK_WIDTH;
+
+	return c->Set(lx, ly, lz, block);
+}
+
+
+bool World::SetBlockByRay(Ray& ray, float maxDist) {
+
+}
