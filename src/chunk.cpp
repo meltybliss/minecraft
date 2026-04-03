@@ -150,19 +150,26 @@ static void AddFaceUV(std::vector<float>& v,
 
 
 #pragma region ChunkGenerationFuncs 
-void Chunk::FillBaseDirt(int ground) {
-	for (int y = 0; y < CHUNK_HEIGHT; y++) {
-		for (int z = 0; z < CHUNK_WIDTH; z++) {
-			for (int x = 0; x < CHUNK_WIDTH; x++) {
+void Chunk::FillTerrain() {
+	
+	for (int z = 0; z < CHUNK_WIDTH; z++) {
+		for (int x = 0; x < CHUNK_WIDTH; x++) {
+			int wx = cx * CHUNK_WIDTH + x;
+			int wz = cz * CHUNK_WIDTH + z;
+
+
+			int surfaceY = GetSurfaceHeight(wx, wz);
+
+			for (int y = 0; y < CHUNK_HEIGHT; y++) {
 				BlockType b = BlockType::AIR;
 
-				if (y == ground) {
+				if (y == surfaceY) {
 					b = BlockType::Grass;
 				}
-				else if (y < ground && y >= ground - 4) {
+				else if (y < surfaceY && y >= surfaceY - 4) {
 					b = BlockType::Dirt;
 				}
-				else if (y < ground - 4) {
+				else if (y < surfaceY - 4) {
 					b = BlockType::Stone;
 				}
 
@@ -171,6 +178,7 @@ void Chunk::FillBaseDirt(int ground) {
 			}
 		}
 	}
+	
 }
 
 void Chunk::GenerateStoneBlobs(std::mt19937& rng, int ground) {
@@ -303,11 +311,11 @@ void Chunk::generate() {
 
 	int ground = CHUNK_HEIGHT / 2;
 
-	FillBaseDirt(ground);
-	GenerateStoneBlobs(rng, ground);
+	FillTerrain();
+	/*GenerateStoneBlobs(rng, ground);
 	ScatterOre(rng, ground);
 	GenerateOreVein(rng, ground);
-	GenerateCave(rng, ground);
+	GenerateCave(rng, ground);*/
 
 	isDirty = true;
 
@@ -467,4 +475,22 @@ void Chunk::render() {
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, vertexCount);
 	glBindVertexArray(0);
+}
+
+
+
+int Chunk::GetSurfaceHeight(int wx, int wz) const {
+
+	float scale = 0.01f;
+	float n = FractalNoise2D(wx * scale, wz * scale, gWorld->getWorldSeed());
+
+	// 0.5 を引いてから 2倍することで、-1.0 ~ 1.0 の範囲にする
+	// これで baseHeight より低い「谷」も作られるようになります
+	float heightOffset = (n - 0.5f) * 2.0f;
+
+	int baseHeight = CHUNK_HEIGHT / 2;
+	// 山を高くしたいならここを 20 ~ 30 に上げる
+	int amplitude = 20;
+
+	return baseHeight + (int)std::round(heightOffset * amplitude);
 }

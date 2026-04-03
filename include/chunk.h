@@ -8,6 +8,8 @@
 #include <iostream>
 #include <algorithm>
 #include <random>
+#include "noise.h"
+
 
 struct UVRect {
 	float u0, v0, u1, v1;
@@ -77,12 +79,14 @@ struct Chunk {
 
 	static uint32_t makeChunkSeed(uint32_t worldSeed, int cx, int cz);
 
-	void FillBaseDirt(int ground);
+	void FillTerrain();
 	void GenerateStoneBlobs(std::mt19937& rng, int ground);
 	void ScatterOre(std::mt19937& rng, int ground);
 	void GenerateOreVein(std::mt19937& rng, int ground);
 	void GenerateCave(std::mt19937& rng, int ground);
 
+
+	int GetSurfaceHeight(int wx, int wz) const;
 
 	static constexpr int STONE_BLOB_COUNT = 8;
 	static constexpr int ORE_SCATTER_PER_1000 = 20;

@@ -30,8 +30,8 @@ private:
 
 	uint32_t worldSeed;
 
-	int RENDER_DISTANCE = 2;
-	int UNLOAD_DISTANCE = 4;
+	int RENDER_DISTANCE = 5;
+	int UNLOAD_DISTANCE = 7;
 	 
 
 	std::unordered_map<uint64_t, std::unique_ptr<Chunk>> Chunks;

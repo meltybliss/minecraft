@@ -35,7 +35,7 @@ public:
 	Camera& GetCamera() { return cam; }
 	const Camera& GetCamera() const { return cam; }
 private:
-	Vec3 pos{0.0f, 130.0f, 0.0f};//‘«Œ³Šî€
+	Vec3 pos{0.0f, 150.0f, 0.0f};//‘«Œ³Šî€
 	Vec3 vel;
 
 	float yaw = -90;
