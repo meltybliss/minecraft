@@ -30,7 +30,7 @@ int main() {
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	GLuint blockTex = LoadTexture2D("textures/atlas.png");
+	GLuint blockTex = LoadTexture2D("textures/atlas2.png");
 
 	glUseProgram(program);
 	int texLoc = glGetUniformLocation(program, "uTexture");

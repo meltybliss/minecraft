@@ -41,7 +41,8 @@ struct Chunk {
 	unsigned int blocks[CHUNK_SIZE]{};
 
 	std::vector<float> vertices;
-	unsigned int vao, vbo = 0;
+	unsigned int vao = 0;
+	unsigned int vbo = 0;
 	int vertexCount = 0;
 
 	bool inRange(int x, int y, int z) const {
@@ -68,6 +69,8 @@ struct Chunk {
 		if (!inRange(x, y, z)) return false;
 
 		blocks[Index(x, y, z)] = block;
+
+		return true;
 	}
 
 	void CarveSphere(int cx, int cy, int cz, int radius);
@@ -86,5 +89,8 @@ struct Chunk {
 	static constexpr int ORE_VEIN_STEPS = 30;
 	static constexpr int CAVE_STEPS = 50;
 	static constexpr int CAVE_RADIUS = 2;
+
+	static constexpr int ATLAS_COLS = 32;
+	static constexpr int ATLAS_ROWS = 16;
 
 };

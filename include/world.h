@@ -40,9 +40,6 @@ private:
 		return (static_cast<uint64_t>(static_cast<uint32_t>(cx)) << 32 | static_cast<uint32_t>(cz));
 	}
 
-	int32_t MaxCX = 40;
-	int32_t MaxCZ = 40;
-
 
 	void MarkChunkDirty(int32_t cx, int32_t cz);
 	

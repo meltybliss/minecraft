@@ -34,38 +34,55 @@ void Chunk::CarveSphere(int cx, int cy, int cz, int radius) {
 }
 
 #pragma region texture
-static UVRect AtlasUV(int tx, int ty, int cols, int rows) {
-	const float du = 1.0f / cols;
-	const float dv = 1.0f / rows;
+static UVRect AtlasUV(int tx, int ty) {
+	const float du = 1.0f / Chunk::ATLAS_COLS;
+	const float dv = 1.0f / Chunk::ATLAS_ROWS;
 
-	float u0 = tx * du;
-	float v0 = ty * dv;
-	float u1 = u0 + du;
-	float v1 = v0 + dv;
+	int flippedTy = Chunk::ATLAS_ROWS - 1 - ty;
+
+	const float epsU = du * 0.08f;
+	const float epsV = dv * 0.08f;
+
+	float u0 = tx * du + epsU;
+	float v0 = flippedTy * dv + epsV;
+	float u1 = (tx + 1) * du - epsU;
+	float v1 = (flippedTy + 1) * dv - epsV;
 
 	return { u0, v0, u1, v1 };
 }
 
 static UVRect GetBlockUV(unsigned int block, FaceType face) {
 	
+	const unsigned int GRASS = static_cast<unsigned int>(BlockType::Grass);
 	const unsigned int DIRT = static_cast<unsigned int>(BlockType::Dirt);
 	const unsigned int STONE = static_cast<unsigned int>(BlockType::Stone);
 	const unsigned int ORE = static_cast<unsigned int>(BlockType::Ore);
 
+	if (block == GRASS) {
+
+		if (face == FaceType::Top) return AtlasUV(2, 0);
+		if (face == FaceType::Bottom) return AtlasUV(18, 1);
+
+		return AtlasUV(6, 0);
+
+	}
+
 	if (block == DIRT) {
-		return AtlasUV(2, 3, 4, 5); // dirt
+		return AtlasUV(18, 1); // dirt
 	}
 
 	if (block == STONE) {
-		return AtlasUV(0, 0, 4, 5); // stone
+		return AtlasUV(19, 0); // stone
 	}
 
 	if (block == ORE) {
-		return AtlasUV(1, 1, 4, 5);
+		return AtlasUV(0, 4);
 	}
 
-	return AtlasUV(0, 1, 4, 5);
+	return AtlasUV(1, 0);
 }
+
+
 
 static void AddVertex(std::vector<float>& v,
 	float x, float y, float z,
@@ -76,6 +93,40 @@ static void AddVertex(std::vector<float>& v,
 	v.push_back(z);
 	v.push_back(u);
 	v.push_back(vv);
+}
+
+static void AddFaceUVFlippedX(std::vector<float>& v,
+	float x0, float y0, float z0,
+	float x1, float y1, float z1,
+	float x2, float y2, float z2,
+	float x3, float y3, float z3,
+	float u0, float v0,
+	float u1, float v1)
+{
+	AddVertex(v, x0, y0, z0, u1, v0);
+	AddVertex(v, x1, y1, z1, u0, v0);
+	AddVertex(v, x2, y2, z2, u0, v1);
+
+	AddVertex(v, x2, y2, z2, u0, v1);
+	AddVertex(v, x3, y3, z3, u1, v1);
+	AddVertex(v, x0, y0, z0, u1, v0);
+}
+
+static void AddFaceUVRotLeft90(std::vector<float>& v,
+	float x0, float y0, float z0,
+	float x1, float y1, float z1,
+	float x2, float y2, float z2,
+	float x3, float y3, float z3,
+	float u0, float v0,
+	float u1, float v1)
+{
+	AddVertex(v, x0, y0, z0, u1, v0);
+	AddVertex(v, x1, y1, z1, u1, v1);
+	AddVertex(v, x2, y2, z2, u0, v1);
+
+	AddVertex(v, x2, y2, z2, u0, v1);
+	AddVertex(v, x3, y3, z3, u0, v0);
+	AddVertex(v, x0, y0, z0, u1, v0);
 }
 
 static void AddFaceUV(std::vector<float>& v,
@@ -105,8 +156,14 @@ void Chunk::FillBaseDirt(int ground) {
 			for (int x = 0; x < CHUNK_WIDTH; x++) {
 				BlockType b = BlockType::AIR;
 
-				if (y <= ground) {
+				if (y == ground) {
+					b = BlockType::Grass;
+				}
+				else if (y < ground && y >= ground - 4) {
 					b = BlockType::Dirt;
+				}
+				else if (y < ground - 4) {
+					b = BlockType::Stone;
 				}
 
 
@@ -327,19 +384,18 @@ void Chunk::buildMesh() {
 						uv.u0, uv.v0, uv.u1, uv.v1);
 				}
 
-				//right
+				// right
 				if (InAir(x + 1, y, z)) {
 					UVRect uv = GetBlockUV(block, FaceType::Side);
-					AddFaceUV(vertices,
+					AddFaceUVFlippedX(vertices,
 						fx + s, fy, fz,
 						fx + s, fy, fz + s,
 						fx + s, fy + s, fz + s,
 						fx + s, fy + s, fz,
 						uv.u0, uv.v0, uv.u1, uv.v1);
-
 				}
-				
-				//left
+
+				// left
 				if (InAir(x - 1, y, z)) {
 					UVRect uv = GetBlockUV(block, FaceType::Side);
 					AddFaceUV(vertices,
@@ -350,10 +406,10 @@ void Chunk::buildMesh() {
 						uv.u0, uv.v0, uv.u1, uv.v1);
 				}
 
-				//back
+				// back
 				if (InAir(x, y, z + 1)) {
 					UVRect uv = GetBlockUV(block, FaceType::Side);
-					AddFaceUV(vertices,
+					AddFaceUVRotLeft90(vertices,
 						fx, fy, fz + s,
 						fx, fy + s, fz + s,
 						fx + s, fy + s, fz + s,
@@ -361,7 +417,7 @@ void Chunk::buildMesh() {
 						uv.u0, uv.v0, uv.u1, uv.v1);
 				}
 
-				//front
+				// front
 				if (InAir(x, y, z - 1)) {
 					UVRect uv = GetBlockUV(block, FaceType::Side);
 					AddFaceUV(vertices,
