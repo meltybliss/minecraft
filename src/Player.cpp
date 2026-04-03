@@ -84,7 +84,7 @@ void Player::UpdateMouse() {
             int ny = static_cast<int>(std::floor(lastHit.hitPos.y + lastHit.normal.y));
             int nz = static_cast<int>(std::floor(lastHit.hitPos.z + lastHit.normal.z));
 
-            if (IsPlaceable(GetAABBAt(pos), Vec3{(float)nx, (float)ny, (float)nz})) {
+            if (CanPlaceBlockAt(Vec3{(float)nx, (float)ny, (float)nz})) {
 
                 gWorld->SetBlockGlobal(nx, ny, nz, (unsigned int)selectedBlock);
             }
