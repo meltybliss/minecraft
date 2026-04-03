@@ -8,6 +8,8 @@
 #include "HitResult.h"
 #include "ShaderInitUtils.h"
 #include "Mat4.h"
+#include <deque>
+
 
 class World {
 public:
@@ -30,8 +32,11 @@ private:
 
 	uint32_t worldSeed;
 
-	int RENDER_DISTANCE = 5;
-	int UNLOAD_DISTANCE = 7;
+	int RENDER_DISTANCE = 10;
+	int UNLOAD_DISTANCE = 12;
+
+	std::deque<Chunk*> generationQueue;
+	std::deque<Chunk*> meshQueue;
 	 
 
 	std::unordered_map<uint64_t, std::unique_ptr<Chunk>> Chunks;

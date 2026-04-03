@@ -52,7 +52,7 @@ float PerlinNoise2D(float x, float z, uint32_t seed) {
     float value = Lerp(ix0, ix1, sz);
 
     // PerlinƒmƒCƒY‚ÌŒ‹‰Ê‚Í -0.7 ~ 0.7 ‚­‚ç‚¢‚É‚È‚é‚Ì‚ÅA0.0 ~ 1.0 ‚É•â³
-    return value * 0.5f + 0.5f;
+    return value * 1.5f;
 }
 
 float FractalNoise2D(float x, float z, uint32_t seed) {
@@ -69,5 +69,6 @@ float FractalNoise2D(float x, float z, uint32_t seed) {
         amplitude *= 0.5f;
         frequency *= 2.0f;
     }
-    return total / maxValue;
+    
+    return (total / maxValue) * 0.5f + 0.5f;
 }

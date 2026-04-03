@@ -52,6 +52,7 @@ private:
 
 	Camera cam;
 
+	bool debugFly = false;
 	bool grounded = false;
 
 	BlockType selectedBlock = BlockType::Dirt;

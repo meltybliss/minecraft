@@ -466,10 +466,6 @@ void Chunk::buildMesh() {
 
 void Chunk::render() {
 
-	if (isDirty) {
-		buildMesh();
-	}
-
 	if (vertexCount == 0) return;
 
 	glBindVertexArray(vao);
@@ -477,20 +473,33 @@ void Chunk::render() {
 	glBindVertexArray(0);
 }
 
-
-
 int Chunk::GetSurfaceHeight(int wx, int wz) const {
+	uint32_t seed = gWorld->getWorldSeed();
 
-	float scale = 0.01f;
-	float n = FractalNoise2D(wx * scale, wz * scale, gWorld->getWorldSeed());
+	float continent = FractalNoise2D(wx * 0.0012f, wz * 0.0012f, seed + 10);
+	float hills = FractalNoise2D(wx * 0.0060f, wz * 0.0060f, seed + 20);
+	float mountainM = FractalNoise2D(wx * 0.0015f, wz * 0.0015f, seed + 30);
+	float mountainD = FractalNoise2D(wx * 0.0150f, wz * 0.0150f, seed + 40);
 
-	// 0.5 ‚ğˆø‚¢‚Ä‚©‚ç 2”{‚·‚é‚±‚Æ‚ÅA-1.0 ~ 1.0 ‚Ì”ÍˆÍ‚É‚·‚é
-	// ‚±‚ê‚Å baseHeight ‚æ‚è’á‚¢u’Jv‚àì‚ç‚ê‚é‚æ‚¤‚É‚È‚è‚Ü‚·
-	float heightOffset = (n - 0.5f) * 2.0f;
+	float c = (continent - 0.5f) * 2.0f;
+	float h = (hills - 0.5f) * 2.0f;
+	float d = (mountainD - 0.5f) * 2.0f;
 
-	int baseHeight = CHUNK_HEIGHT / 2;
-	// R‚ğ‚‚­‚µ‚½‚¢‚È‚ç‚±‚±‚ğ 20 ~ 30 ‚Éã‚°‚é
-	int amplitude = 20;
+	float mountain = 0.0f;
+	if (mountainM > 0.25f) {
+		float m = (mountainM - 0.25f) / 0.75f;
+		m = std::clamp(m, 0.0f, 1.0f);
+		float mountainWeight = std::pow(m, 1.5f);
 
-	return baseHeight + (int)std::round(heightOffset * amplitude);
+		mountain = mountainWeight * 160.0f;
+		mountain += d * 40.0f * mountainWeight;
+	}
+
+	float height =
+		64.0f +
+		c * 18.0f +
+		h * 8.0f +
+		mountain;
+
+	return (int)std::round(height);
 }

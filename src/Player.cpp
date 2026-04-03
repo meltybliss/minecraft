@@ -18,42 +18,74 @@ void Player::UpdatePlrMovement(GLFWwindow* window, float dt) {
 
     Vec3 right = Normalize(Cross(forward, Vec3{ 0, 1, 0 }));
     Vec3 move = { 0, 0, 0 };
+    
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) move = move + forward;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) move = move - forward;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) move = move - right;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) move = move + right;
+    if (glfwGetKey(window, GLFW_KEY_TAB)) debugFly = !debugFly;
 
-    if (grounded && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) { vel.y = jmpPower; grounded = false; }
+    if (!debugFly) {
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) move = move + forward;
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) move = move - forward;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) move = move - right;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) move = move + right;
 
-    if (Length(move) > 0.0f) move = Normalize(move);
+        if (grounded && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) { vel.y = jmpPower; grounded = false; }
 
-    vel.x = move.x * walkSpeed;
-    vel.z = move.z * walkSpeed;
-    vel.y += gravity * dt;
 
-    pos.x += vel.x * dt;
-    if (IntersectsSolidBlock(GetAABBAt(pos))) {
-        pos.x -= vel.x * dt;
-        vel.x = 0.0f;
-    }
+        if (Length(move) > 0.0f) move = Normalize(move);
 
-    pos.z += vel.z * dt;
-    if (IntersectsSolidBlock(GetAABBAt(pos))) {
-        pos.z -= vel.z * dt;
-        vel.z = 0.0f;
-    }
+        vel.x = move.x * walkSpeed;
+        vel.z = move.z * walkSpeed;
+        vel.y += gravity * dt;
 
-    pos.y += vel.y * dt;
-    if (IntersectsSolidBlock(GetAABBAt(pos))) {
-        pos.y -= vel.y * dt;
-        if (vel.y < 0.0f) {
-            grounded = true;
+        pos.x += vel.x * dt;
+        if (IntersectsSolidBlock(GetAABBAt(pos))) {
+            pos.x -= vel.x * dt;
+            vel.x = 0.0f;
         }
 
-        vel.y = 0.0f;
-    }
+        pos.z += vel.z * dt;
+        if (IntersectsSolidBlock(GetAABBAt(pos))) {
+            pos.z -= vel.z * dt;
+            vel.z = 0.0f;
+        }
 
+        pos.y += vel.y * dt;
+        if (IntersectsSolidBlock(GetAABBAt(pos))) {
+            pos.y -= vel.y * dt;
+            if (vel.y < 0.0f) {
+                grounded = true;
+            }
+
+            vel.y = 0.0f;
+        }
+    }
+    else {
+        float speed = 10.0f * dt;
+
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            pos += forward * speed;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            pos -= forward * speed;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            pos -= right * speed;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            pos += right * speed;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+            pos.y += speed;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+            pos.y -= speed;
+        }
+    }
 
     this->UpdateCamera();
 }

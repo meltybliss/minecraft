@@ -33,14 +33,13 @@ void World::Tick() {
 				c->cx = x;
 				c->cz = z;
 
-				c->generate();
-				Chunks[key] = std::move(c);
+				if (!c->isQueuedForGen) {
+					generationQueue.push_back(c.get());
+					c->isQueuedForGen = true;
+					Chunks[key] = std::move(c);
+					
+				}
 
-				MarkChunkDirty(x, z);
-				MarkChunkDirty(x + 1, z);
-				MarkChunkDirty(x - 1, z);
-				MarkChunkDirty(x, z + 1);
-				MarkChunkDirty(x, z - 1);
 				
 			}
 		}
@@ -56,6 +55,34 @@ void World::Tick() {
 		return (dx >= UNLOAD_DISTANCE || dz >= UNLOAD_DISTANCE);
 
 	});
+
+
+	int genBudget = 3;
+	while (genBudget-- > 0 && !generationQueue.empty()) {
+		Chunk* c = generationQueue.front();
+		generationQueue.pop_front();
+
+		c->generate();
+		c->isQueuedForGen = false;
+
+		MarkChunkDirty(c->cx, c->cz);
+		MarkChunkDirty(c->cx + 1, c->cz);
+		MarkChunkDirty(c->cx - 1, c->cz);
+		MarkChunkDirty(c->cx, c->cz + 1);
+		MarkChunkDirty(c->cx, c->cz - 1);
+	}
+
+
+	int meshBudget = 3;
+	while (meshBudget-- > 0 && !meshQueue.empty()) {
+		Chunk* c = meshQueue.front();
+		meshQueue.pop_front();
+
+		c->buildMesh();
+		c->isQueuedForMesh = false;
+
+	}
+
 }
 
 
@@ -63,11 +90,6 @@ void World::render() {
 	for (auto& item : Chunks) {
 		auto& c = item.second;
 		
-		if (c->isDirty) {
-
-			c->buildMesh();
-		}
-
 		c->render();
 	}
 }
@@ -103,7 +125,13 @@ void World::MarkChunkDirty(int32_t cx, int32_t cz) {
 	auto it = Chunks.find(key);
 	if (it == Chunks.end() || !it->second) return;
 	
-	it->second->isDirty = true;
+	Chunk* c = it->second.get();
+	c->isDirty = true;
+
+	if (!c->isQueuedForMesh) {
+		meshQueue.push_back(c);
+		c->isQueuedForMesh = true;
+	}
 }
 
 bool World::SetBlockGlobal(int bx, int by, int bz, unsigned int block) {
