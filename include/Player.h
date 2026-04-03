@@ -61,6 +61,7 @@ private:
 
 	AABB GetAABBAt(const Vec3& p) const;
 	bool IntersectsSolidBlock(const AABB& box);
+	bool CanPlaceBlockAt(Vec3 blockPos) const;
 
 	void UpdateCamera() {
 

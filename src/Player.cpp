@@ -84,7 +84,10 @@ void Player::UpdateMouse() {
             int ny = static_cast<int>(std::floor(lastHit.hitPos.y + lastHit.normal.y));
             int nz = static_cast<int>(std::floor(lastHit.hitPos.z + lastHit.normal.z));
 
-            gWorld->SetBlockGlobal(nx, ny, nz, (unsigned int)selectedBlock);
+            if (IsPlaceable(GetAABBAt(pos), Vec3{(float)nx, (float)ny, (float)nz})) {
+
+                gWorld->SetBlockGlobal(nx, ny, nz, (unsigned int)selectedBlock);
+            }
         }
     }
 
@@ -121,4 +124,25 @@ bool Player::IntersectsSolidBlock(const AABB& box) {
     }
 
     return false;
+}
+
+
+bool Player::CanPlaceBlockAt(Vec3 blockPos) const {
+    const AABB& box = GetAABBAt(pos);
+
+    int minX = (int)std::floor(box.min.x);
+    int maxX = (int)std::floor(box.max.x);
+    int minY = (int)std::floor(box.min.y);
+    int maxY = (int)std::floor(box.max.y);
+    int minZ = (int)std::floor(box.min.z);
+    int maxZ = (int)std::floor(box.max.z);
+
+    int bx = (int)std::floor(blockPos.x);
+    int by = (int)std::floor(blockPos.y);
+    int bz = (int)std::floor(blockPos.z);
+
+    return (!(bx >= minX && bx <= maxX &&
+        by >= minY && by <= maxY &&
+        bz >= minZ && bz <= maxZ));
+
 }
