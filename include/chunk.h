@@ -9,7 +9,8 @@
 #include <algorithm>
 #include <random>
 #include "noise.h"
-
+#include "CaveSeed.h"
+#include <unoredered_map>
 
 struct UVRect {
 	float u0, v0, u1, v1;
@@ -89,6 +90,11 @@ struct Chunk {
 	void GenerateCave(std::mt19937& rng);
 
 
+	void ApplyCaves();
+	void ApplyCavesFromSourceChunk(int scx, int scz);
+	std::vector<CaveSeed> BuildCavesFromSourceChunk(int scx, int scz);
+	void ApplySingleCave(const CaveSeed& cave);
+
 	int GetSurfaceHeight(int wx, int wz) const;
 
 	static constexpr int STONE_BLOB_COUNT = 8;
@@ -99,5 +105,7 @@ struct Chunk {
 
 	static constexpr int ATLAS_COLS = 32;
 	static constexpr int ATLAS_ROWS = 16;
+
+	static constexpr int kCaveSalt = 9999u;
 
 };

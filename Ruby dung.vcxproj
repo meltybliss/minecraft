@@ -147,6 +147,7 @@
   <ItemGroup>
     <ClInclude Include="include\block.h" />
     <ClInclude Include="include\camera.h" />
+    <ClInclude Include="include\CaveSeed.h" />
     <ClInclude Include="include\chunk.h" />
     <ClInclude Include="include\game.h" />
     <ClInclude Include="include\glad\glad.h" />

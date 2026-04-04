@@ -1,6 +1,7 @@
 #include "chunk.h"
 #include "world.h"
 
+
 Chunk::~Chunk() {
 	if (vao != 0) glDeleteVertexArrays(1, &vao);
 	if (vbo != 0) glDeleteBuffers(1, &vbo);
@@ -338,45 +339,234 @@ void Chunk::GenerateOreVein(std::mt19937& rng, int ground) {
 	}
 }
 
+void Chunk::ApplyCaves() {
+	static int R = 1;
 
-void Chunk::GenerateCave(std::mt19937& rng) {
+	for (int scz = cz - R; scz <= cz + R; scz++) {
+		for (int scx = cx - R; scx <= cx + R; scx++) {
+			ApplyCavesFromSourceChunk(scx, scz);
+		}
+	}
+
+
+
+}
+
+void Chunk::ApplyCavesFromSourceChunk(int scx, int scz) {
+	
+	std::vector<CaveSeed> caves = BuildCavesFromSourceChunk(scx, scz);
+
+	for (auto& cave : caves) {
+		ApplySingleCave(cave);
+	}
+
+
+}
+
+void Chunk::ApplySingleCave(const CaveSeed& cave) {
+	std::mt19937 stepRng(
+		makeChunkSeed(
+			static_cast<uint32_t>(cave.startX * 31.0f + cave.startZ * 17.0f),
+			static_cast<int>(cave.startX),
+			static_cast<int>(cave.startZ)
+		)
+	);
+
+	std::uniform_real_distribution<float> turnDelta(-cave.turnStrength, cave.turnStrength);
+	std::uniform_real_distribution<float> riseDelta(-cave.riseStrength, cave.riseStrength);
+	std::uniform_real_distribution<float> radiusDelta(-cave.radiusJitter, cave.radiusJitter);
+	std::uniform_int_distribution<int> roomRoll(0, 99);
+
+	float x = cave.startX;
+	float y = cave.startY;
+	float z = cave.startZ;
+
+	float yaw = cave.yaw;
+	float pitch = cave.pitch;
+	float radius = cave.radiusStart;
+
+	int chunkMinX = cx * CHUNK_WIDTH;
+	int chunkMaxX = chunkMinX + CHUNK_WIDTH - 1;
+	int chunkMinZ = cz * CHUNK_WIDTH;
+	int chunkMaxZ = chunkMinZ + CHUNK_WIDTH - 1;
+
+	int cachedSurfaceY = GetSurfaceHeight(static_cast<int>(std::round(x)), static_cast<int>(std::round(z)));
+
+
+	for (int i = 0; i < cave.steps; i++) {
+		int carveRadius = std::max(1, static_cast<int>(std::round(radius)));
+		
+		if (x + carveRadius >= chunkMinX && x - carveRadius <= chunkMaxX &&
+			z + carveRadius >= chunkMinZ && z - carveRadius <= chunkMaxZ) {
+
+			int localX = static_cast<int>(std::round(x)) - chunkMinX;
+			int localY = static_cast<int>(std::round(y));
+			int localZ = static_cast<int>(std::round(z)) - chunkMinZ;
+
+			CarveSphere(localX, localY, localZ, carveRadius);
+
+			if (roomRoll(stepRng) < cave.roomChancePercent) {
+				CarveSphere(localX, localY, localZ, carveRadius + 2);
+			}
+		}
+
+		yaw += turnDelta(stepRng);
+		pitch += riseDelta(stepRng);
+		pitch = std::clamp(pitch, -0.45f, 0.45f);
+
+		float dx = std::cos(pitch) * std::cos(yaw);
+		float dy = std::sin(pitch);
+		float dz = std::cos(pitch) * std::sin(yaw);
+
+		x += dx;
+		y += dy;
+		z += dz;
+
+		if (i % 4 == 0) {
+			cachedSurfaceY = GetSurfaceHeight(static_cast<int>(std::round(x)), static_cast<int>(std::round(z)));
+		}
+
+		int minY = 6;
+		int maxY = std::max(minY, cachedSurfaceY - 6);
+		y = std::clamp(y, static_cast<float>(minY), static_cast<float>(maxY));
+
+
+		radius += radiusDelta(stepRng);
+		radius = std::clamp(radius, cave.radiusMin, cave.radiusMax);
+
+	}
+
+}
+
+std::vector<CaveSeed> Chunk::BuildCavesFromSourceChunk(int scx, int scz) {
+	std::vector<CaveSeed> caves;
+	std::mt19937 rng(makeChunkSeed(gWorld->getWorldSeed() + kCaveSalt, scx, scz));
+
+	std::uniform_int_distribution<int> chance(0, 99);
+	if (chance(rng) >= 15) return caves;
+
+	std::uniform_int_distribution<int> caveCountDist(1, 3);
+	int caveCount = caveCountDist(rng);
+
 	std::uniform_int_distribution<int> xDist(2, CHUNK_WIDTH - 3);
 	std::uniform_int_distribution<int> zDist(2, CHUNK_WIDTH - 3);
-	std::uniform_int_distribution<int> depthDist(8, 120);
-	std::uniform_int_distribution<int> dirDist(0, 5);
-	std::uniform_int_distribution<int> radiusDist(1, 2);
+	std::uniform_int_distribution<int> depthDist(12, 40);
+	std::uniform_int_distribution<int> stepDist(40, 100);
+	std::uniform_real_distribution<float> angleDist(0.0f, 6.283185f);
+	std::uniform_real_distribution<float> pitchDist(-0.12f, 0.12f);
+	std::uniform_real_distribution<float> radiusStartDist(1.6f, 2.8f);
+	std::uniform_real_distribution<float> turnDist(0.12f, 0.35f);
+	std::uniform_real_distribution<float> riseDist(0.04f, 0.12f);
+	std::uniform_real_distribution<float> jitterDist(0.08f, 0.18f);
+	std::uniform_int_distribution<int> roomChanceDist(3, 10);
 
-	int x = xDist(rng);
-	int z = zDist(rng);
+	for (int i = 0; i < caveCount; i++) {
+		int lx = xDist(rng);
+		int lz = zDist(rng);
 
-	int wx = cx * CHUNK_WIDTH + x;
-	int wz = cz * CHUNK_WIDTH + z;
+		int wx = scx * CHUNK_WIDTH + lx;
+		int wz = scz * CHUNK_WIDTH + lz;
+		int surfaceY = GetSurfaceHeight(wx, wz);
+
+		int minY = 6;
+		int maxY = std::max(minY, surfaceY - 8);
+		int wy = std::clamp(surfaceY - depthDist(rng), minY, maxY);
+
+		CaveSeed cave{};
+		cave.startX = static_cast<float>(wx);
+		cave.startY = static_cast<float>(wy);
+		cave.startZ = static_cast<float>(wz);
+
+		cave.yaw = angleDist(rng);
+		cave.pitch = pitchDist(rng);
+		cave.steps = stepDist(rng);
+
+		cave.radiusStart = radiusStartDist(rng);
+		cave.radiusMin = 1.2f;
+		cave.radiusMax = 3.8f;
+
+		cave.turnStrength = turnDist(rng);
+		cave.riseStrength = riseDist(rng);
+		cave.radiusJitter = jitterDist(rng);
+
+		cave.roomChancePercent = roomChanceDist(rng);
+
+		caves.push_back(cave);
+	}
+
+	return caves;
+}
+
+void Chunk::GenerateCave(std::mt19937& rng) {
+	
+	std::uniform_int_distribution<int> xDist(2, CHUNK_WIDTH - 3);
+	std::uniform_int_distribution<int> zDist(2, CHUNK_WIDTH - 3);
+	std::uniform_int_distribution<int> depthDist(12, 40);
+	std::uniform_int_distribution<int> stepCountDist(30, 90);
+	std::uniform_real_distribution<float> turnDist(-0.35f, 0.35f);
+	std::uniform_real_distribution<float> riseDist(-0.12f, 0.12f);
+	std::uniform_real_distribution<float> radiusJitter(-0.15f, 0.15f);
+	std::uniform_int_distribution<int> roomChance(0, 99);
+
+	int startX = xDist(rng);
+	int startZ = zDist(rng);
+
+	int wx = cx * CHUNK_WIDTH + startX;
+	int wz = cz * CHUNK_WIDTH + startZ;
 	int surfaceY = GetSurfaceHeight(wx, wz);
 
-	int y = surfaceY - depthDist(rng);
-	y = std::clamp(y, 5, surfaceY - 6);
+	int minY = 6;
+	int maxY = std::max(minY, surfaceY - 8);
+	int startY = std::clamp(surfaceY - depthDist(rng), minY, maxY);
 
-	for (int i = 0; i < CAVE_STEPS; i++) {
-		int radius = radiusDist(rng);
-		CarveSphere(x, y, z, radius);
+	float x = static_cast<float>(startX);
+	float y = static_cast<float>(startY);
+	float z = static_cast<float>(startZ);
 
-		int dir = dirDist(rng);
-		if (dir == 0) x++;
-		if (dir == 1) x--;
-		if (dir == 2) y++;
-		if (dir == 3) y--;
-		if (dir == 4) z++;
-		if (dir == 5) z--;
+	std::uniform_real_distribution<float> angleDist(0.0f, 6.28318f);
+	float yaw = angleDist(rng);
+	float pitch = riseDist(rng);
 
-		x = std::clamp(x, 1, CHUNK_WIDTH - 2);
-		z = std::clamp(z, 1, CHUNK_WIDTH - 2);
+	float radius = 1.8f;
+	int steps = stepCountDist(rng);
 
-		int curWx = cx * CHUNK_WIDTH + x;
-		int curWz = cz * CHUNK_WIDTH + z;
+	for (int i = 0; i < steps; i++) {
+		int carveRadius = std::max(1, static_cast<int>(std::round(radius)));
+		CarveSphere((int)std::round(x), (int)std::round(y), (int)std::round(z), carveRadius);
+
+		if (roomChance(rng) < 6) {
+			CarveSphere((int)std::round(x), (int)std::round(y), (int)std::round(z), carveRadius + 2);
+		}
+
+		yaw += turnDist(rng);
+		pitch += riseDist(rng) * 0.35f;
+		pitch = std::clamp(pitch, -0.45f, 0.45f);
+
+		float dx = std::cos(pitch) * std::cos(yaw);
+		float dy = std::sin(pitch);
+		float dz = std::cos(pitch) * std::sin(yaw);
+
+		x += dx;
+		y += dy;
+		z += dz;
+
+		int lx = (int)std::round(x);
+		int lz = (int)std::round(z);
+
+		lx = std::clamp(lx, 1, CHUNK_WIDTH - 2);
+		lz = std::clamp(lz, 1, CHUNK_WIDTH - 2);
+		x = (float)lx;
+		z = (float)lz;
+
+		int curWx = cx * CHUNK_WIDTH + lx;
+		int curWz = cz * CHUNK_WIDTH + lz;
 		int curSurfaceY = GetSurfaceHeight(curWx, curWz);
 
-		y = std::min(y, curSurfaceY - 3); // ’n•\‚Éo‚É‚­‚­‚·‚é
-		y = std::clamp(y, 4, CHUNK_HEIGHT - 5);
+		int curMaxY = std::max(minY, curSurfaceY - 6);
+		y = std::clamp(y, (float)minY, (float)curMaxY);
+
+		radius += radiusJitter(rng);
+		radius = std::clamp(radius, 1.3f, 3.2f);
 	}
 }
 #pragma endregion ChunkGenerationFuncs
@@ -389,19 +579,7 @@ void Chunk::generate() {
 
 	FillTerrain();
 	GenerateTrees(rng);
-
-	std::uniform_int_distribution<int> chance(0, 99);
-	if (chance(rng) < 35) {   // 35% ‚Å“´ŒA¶¬
-
-		std::uniform_int_distribution<int> caveCountDist(1, 3);
-
-		int caveCount = caveCountDist(rng);
-
-		for (int i = 0; i < caveCount; i++) {
-			GenerateCave(rng);
-		}
-
-	}
+	ApplyCaves();
 	/*GenerateStoneBlobs(rng, ground);
 	ScatterOre(rng, ground);
 	GenerateOreVein(rng, ground);
