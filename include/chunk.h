@@ -10,7 +10,7 @@
 #include <random>
 #include "noise.h"
 #include "CaveSeed.h"
-#include <unoredered_map>
+#include <unordered_map>
 
 struct UVRect {
 	float u0, v0, u1, v1;
@@ -81,6 +81,7 @@ struct Chunk {
 	void CarveSphere(int cx, int cy, int cz, int radius);
 
 	static uint32_t makeChunkSeed(uint32_t worldSeed, int cx, int cz);
+	static uint64_t GetChunkKey(int32_t scx, int32_t scz);
 
 	void FillTerrain();
 	void GenerateTrees(std::mt19937&);
@@ -96,6 +97,8 @@ struct Chunk {
 	void ApplySingleCave(const CaveSeed& cave);
 
 	int GetSurfaceHeight(int wx, int wz) const;
+
+	std::unordered_map<uint64_t, std::vector<CaveSeed>> cavesCashe;
 
 	static constexpr int STONE_BLOB_COUNT = 8;
 	static constexpr int ORE_SCATTER_PER_1000 = 20;

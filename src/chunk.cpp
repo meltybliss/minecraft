@@ -14,6 +14,10 @@ uint32_t Chunk::makeChunkSeed(uint32_t worldSeed, int cx, int cz) {
 	return worldSeed ^ x ^ z;
 }
 
+uint64_t Chunk::GetChunkKey(int32_t scx, int32_t scz) {
+	return (static_cast<uint64_t>(static_cast<uint32_t>(scx)) << 32) |
+		static_cast<uint32_t>(scz);
+}
 
 #pragma region texture
 static UVRect AtlasUV(int tx, int ty) {
@@ -354,9 +358,17 @@ void Chunk::ApplyCaves() {
 
 void Chunk::ApplyCavesFromSourceChunk(int scx, int scz) {
 	
-	std::vector<CaveSeed> caves = BuildCavesFromSourceChunk(scx, scz);
+	uint64_t key = GetChunkKey(scx, scz);
 
-	for (auto& cave : caves) {
+	auto it = cavesCashe.find(key);
+	if (it == cavesCashe.end()) {
+		auto caves = BuildCavesFromSourceChunk(scx, scz);
+		auto [insertedIt, _] = cavesCashe.emplace(key, std::move(caves));
+		it = insertedIt;
+	}
+
+	
+	for (const auto& cave : it->second) {
 		ApplySingleCave(cave);
 	}
 
@@ -440,6 +452,8 @@ void Chunk::ApplySingleCave(const CaveSeed& cave) {
 
 std::vector<CaveSeed> Chunk::BuildCavesFromSourceChunk(int scx, int scz) {
 	std::vector<CaveSeed> caves;
+
+
 	std::mt19937 rng(makeChunkSeed(gWorld->getWorldSeed() + kCaveSalt, scx, scz));
 
 	std::uniform_int_distribution<int> chance(0, 99);
