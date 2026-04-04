@@ -511,7 +511,7 @@ int Chunk::GetSurfaceHeight(int wx, int wz) const {
 	float mw = std::pow(m, 1.4f);
 
 	float massif = std::pow(mountainBase, 1.15f) * 130.0f;
-	float shape = std::pow(mountainShape, 1.8f) * 80.0f;
+	float shape = std::pow(mountainShape, 2.0f) * 90.0f;
 	float rough = (mountainDetail - 0.5f) * 16.0f;
 
 	float mountainHeight = baseHeight + (massif + shape + rough) * mw;
