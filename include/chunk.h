@@ -86,7 +86,7 @@ struct Chunk {
 	void GenerateStoneBlobs(std::mt19937& rng, int ground);
 	void ScatterOre(std::mt19937& rng, int ground);
 	void GenerateOreVein(std::mt19937& rng, int ground);
-	void GenerateCave(std::mt19937& rng, int ground);
+	void GenerateCave(std::mt19937& rng);
 
 
 	int GetSurfaceHeight(int wx, int wz) const;

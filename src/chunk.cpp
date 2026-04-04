@@ -14,25 +14,6 @@ uint32_t Chunk::makeChunkSeed(uint32_t worldSeed, int cx, int cz) {
 }
 
 
-void Chunk::CarveSphere(int cx, int cy, int cz, int radius) {
-	for (int z = 0; z < CHUNK_WIDTH; z++) {
-		for (int y = 0; y < CHUNK_HEIGHT; y++) {
-			for (int x = 0; x < CHUNK_WIDTH; x++) {
-				int dx = x - cx;
-				int dy = y - cy;
-				int dz = z - cz;
-
-				if (dx * dx + dy * dy + dz * dz <= radius * radius) {
-					Set(x, y, z, (unsigned int)BlockType::AIR);
-				}
-
-
-			}
-		}
-	}
-
-}
-
 #pragma region texture
 static UVRect AtlasUV(int tx, int ty) {
 	const float du = 1.0f / Chunk::ATLAS_COLS;
@@ -195,6 +176,31 @@ void Chunk::FillTerrain() {
 }
 
 
+void Chunk::CarveSphere(int cx, int cy, int cz, int radius) {
+	int minX = std::max(0, cx - radius);
+	int maxX = std::min(CHUNK_WIDTH - 1, cx + radius);
+
+	int minY = std::max(0, cy - radius);
+	int maxY = std::min(CHUNK_HEIGHT - 1, cy + radius);
+
+	int minZ = std::max(0, cz - radius);
+	int maxZ = std::min(CHUNK_WIDTH - 1, cz + radius);
+
+	for (int z = minZ; z <= maxZ; z++) {
+		for (int y = minY; y <= maxY; y++) {
+			for (int x = minX; x <= maxX; x++) {
+				int dx = x - cx;
+				int dy = y - cy;
+				int dz = z - cz;
+
+				if (dx * dx + dy * dy + dz * dz <= radius * radius) {
+					Set(x, y, z, (unsigned int)BlockType::AIR);
+				}
+			}
+		}
+	}
+}
+
 void Chunk::GenerateTrees(std::mt19937& rng) {
 	std::uniform_int_distribution<int> chance(0, 99);
 	std::uniform_int_distribution<int> heightDist(4, 6);
@@ -333,35 +339,44 @@ void Chunk::GenerateOreVein(std::mt19937& rng, int ground) {
 }
 
 
-void Chunk::GenerateCave(std::mt19937& rng, int ground) {
-
-	//cave RandomWalk
-	std::uniform_int_distribution<int> xDist(0, CHUNK_WIDTH - 1);
-	std::uniform_int_distribution<int> zDist(0, CHUNK_WIDTH - 1);
+void Chunk::GenerateCave(std::mt19937& rng) {
+	std::uniform_int_distribution<int> xDist(2, CHUNK_WIDTH - 3);
+	std::uniform_int_distribution<int> zDist(2, CHUNK_WIDTH - 3);
+	std::uniform_int_distribution<int> depthDist(8, 120);
 	std::uniform_int_distribution<int> dirDist(0, 5);
-	std::uniform_int_distribution<int> caveStartYDist(8, ground - 1);
-	{
-		int x = xDist(rng);
-		int y = caveStartYDist(rng);
-		int z = zDist(rng);
+	std::uniform_int_distribution<int> radiusDist(1, 2);
 
-		for (int i = 0; i < CAVE_STEPS; i++) {
-			CarveSphere(x, y, z, CAVE_RADIUS);
+	int x = xDist(rng);
+	int z = zDist(rng);
 
-			int dir = dirDist(rng);
-			if (dir == 0) x++;
-			if (dir == 1) x--;
-			if (dir == 2) y++;
-			if (dir == 3) y--;
-			if (dir == 4) z++;
-			if (dir == 5) z--;
+	int wx = cx * CHUNK_WIDTH + x;
+	int wz = cz * CHUNK_WIDTH + z;
+	int surfaceY = GetSurfaceHeight(wx, wz);
 
-			x = std::clamp(x, 0, CHUNK_WIDTH - 1);
-			y = std::clamp(y, 0, CHUNK_HEIGHT - 1);
-			z = std::clamp(z, 0, CHUNK_WIDTH - 1);
+	int y = surfaceY - depthDist(rng);
+	y = std::clamp(y, 5, surfaceY - 6);
 
-		}
+	for (int i = 0; i < CAVE_STEPS; i++) {
+		int radius = radiusDist(rng);
+		CarveSphere(x, y, z, radius);
 
+		int dir = dirDist(rng);
+		if (dir == 0) x++;
+		if (dir == 1) x--;
+		if (dir == 2) y++;
+		if (dir == 3) y--;
+		if (dir == 4) z++;
+		if (dir == 5) z--;
+
+		x = std::clamp(x, 1, CHUNK_WIDTH - 2);
+		z = std::clamp(z, 1, CHUNK_WIDTH - 2);
+
+		int curWx = cx * CHUNK_WIDTH + x;
+		int curWz = cz * CHUNK_WIDTH + z;
+		int curSurfaceY = GetSurfaceHeight(curWx, curWz);
+
+		y = std::min(y, curSurfaceY - 3); // ’n•\‚Éo‚É‚­‚­‚·‚é
+		y = std::clamp(y, 4, CHUNK_HEIGHT - 5);
 	}
 }
 #pragma endregion ChunkGenerationFuncs
@@ -374,10 +389,23 @@ void Chunk::generate() {
 
 	FillTerrain();
 	GenerateTrees(rng);
+
+	std::uniform_int_distribution<int> chance(0, 99);
+	if (chance(rng) < 35) {   // 35% ‚Å“´ŒA¶¬
+
+		std::uniform_int_distribution<int> caveCountDist(1, 3);
+
+		int caveCount = caveCountDist(rng);
+
+		for (int i = 0; i < caveCount; i++) {
+			GenerateCave(rng);
+		}
+
+	}
 	/*GenerateStoneBlobs(rng, ground);
 	ScatterOre(rng, ground);
 	GenerateOreVein(rng, ground);
-	GenerateCave(rng, ground);*/
+	*/
 
 	isDirty = true;
 
