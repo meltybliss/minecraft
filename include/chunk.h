@@ -82,6 +82,7 @@ struct Chunk {
 	static uint32_t makeChunkSeed(uint32_t worldSeed, int cx, int cz);
 
 	void FillTerrain();
+	void GenerateTrees(std::mt19937&);
 	void GenerateStoneBlobs(std::mt19937& rng, int ground);
 	void ScatterOre(std::mt19937& rng, int ground);
 	void GenerateOreVein(std::mt19937& rng, int ground);

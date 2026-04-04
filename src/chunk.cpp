@@ -57,6 +57,9 @@ static UVRect GetBlockUV(unsigned int block, FaceType face) {
 	const unsigned int DIRT = static_cast<unsigned int>(BlockType::Dirt);
 	const unsigned int STONE = static_cast<unsigned int>(BlockType::Stone);
 	const unsigned int ORE = static_cast<unsigned int>(BlockType::Ore);
+	const unsigned int WOOD = static_cast<unsigned int>(BlockType::Wood);
+	const unsigned int LEAVE = static_cast<unsigned int>(BlockType::Leave);
+
 
 	if (block == GRASS) {
 
@@ -77,6 +80,16 @@ static UVRect GetBlockUV(unsigned int block, FaceType face) {
 
 	if (block == ORE) {
 		return AtlasUV(0, 4);
+	}
+
+	if (block == WOOD) {
+		if (face == FaceType::Side) return AtlasUV(3, 3);
+
+		return AtlasUV(4, 3);
+	}
+
+	if (block == LEAVE) {
+		return AtlasUV(7, 5);
 	}
 
 	return AtlasUV(1, 0);
@@ -179,6 +192,54 @@ void Chunk::FillTerrain() {
 		}
 	}
 	
+}
+
+
+void Chunk::GenerateTrees(std::mt19937& rng) {
+	std::uniform_int_distribution<int> chance(0, 99);
+	std::uniform_int_distribution<int> heightDist(4, 6);
+
+
+	for (int z = 2; z < CHUNK_WIDTH - 2; z++) {
+		for (int x = 2; x < CHUNK_WIDTH - 2; x++) {
+			if (chance(rng) >= 1) continue;
+
+			int wx = cx * CHUNK_WIDTH + x;
+			int wz = cz * CHUNK_WIDTH + z;
+			int y = GetSurfaceHeight(wx, wz);
+
+			if (Get(x, y, z) != (unsigned int)BlockType::Grass) continue;
+			if (y + 6 >= CHUNK_HEIGHT) continue;
+
+			int trunkH = heightDist(rng);
+
+			for (int i = 1; i <= trunkH; i++) {
+				Set(x, y + i, z, (unsigned int)BlockType::Wood);
+			}
+
+			int topY = y + trunkH;
+
+			for (int dz = -2; dz <= 2; dz++) {
+				for (int dx = -2; dx <= 2; dx++) {
+					for (int dy = -1; dy <= 1; dy++) {
+						if (std::abs(dx) == 2 && std::abs(dz) == 2 && dy == -1) continue;
+
+						int lx = x + dx;
+						int ly = topY + dy;
+						int lz = z + dz;
+
+						if (lx < 0 || lx >= CHUNK_WIDTH ||
+							lz < 0 || lz >= CHUNK_WIDTH ||
+							ly < 0 || ly >= CHUNK_HEIGHT) continue;
+
+						if (Get(lx, ly, lz) == (unsigned int)BlockType::AIR) {
+							Set(lx, ly, lz, (unsigned int)BlockType::Leave);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void Chunk::GenerateStoneBlobs(std::mt19937& rng, int ground) {
@@ -312,6 +373,7 @@ void Chunk::generate() {
 	int ground = CHUNK_HEIGHT / 2;
 
 	FillTerrain();
+	GenerateTrees(rng);
 	/*GenerateStoneBlobs(rng, ground);
 	ScatterOre(rng, ground);
 	GenerateOreVein(rng, ground);
@@ -362,7 +424,7 @@ void Chunk::buildMesh() {
 					else if (nz >= CHUNK_WIDTH) { targetCz = 2; lz = 0; }
 
 					Chunk* target = neighbors[targetCx][targetCz];
-					if (target == nullptr || target->isQueuedForGen) return false;
+					if (target == nullptr || target->isQueuedForGen) return true;
 
 					return target->Get(lx, ny, lz) == 0;
 				};
@@ -528,3 +590,4 @@ int Chunk::GetSurfaceHeight(int wx, int wz) const {
 	int finalHeight = (int)std::floor(height);
 	return std::clamp(finalHeight, 1, CHUNK_HEIGHT - 1);
 }
+
