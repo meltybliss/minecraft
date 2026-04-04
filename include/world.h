@@ -32,8 +32,8 @@ private:
 
 	uint32_t worldSeed;
 
-	int RENDER_DISTANCE = 10;
-	int UNLOAD_DISTANCE = 12;
+	int RENDER_DISTANCE = 30;
+	int UNLOAD_DISTANCE = 34;
 
 	std::deque<Chunk*> generationQueue;
 	std::deque<Chunk*> meshQueue;

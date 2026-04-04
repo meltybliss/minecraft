@@ -4,3 +4,4 @@
 
 float FractalNoise2D(float x, float z, uint32_t seed);
 float PerlinNoise2D(float x, float z, uint32_t seed);
+float RidgedNoise2D(float x, float z, uint32_t seed);

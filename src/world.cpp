@@ -52,8 +52,13 @@ void World::Tick() {
 		int32_t dx = std::abs(c->cx - curCx);
 		int32_t dz = std::abs(c->cz - curCz);
 
-		return (dx >= UNLOAD_DISTANCE || dz >= UNLOAD_DISTANCE);
+		if (dx >= UNLOAD_DISTANCE || dz >= UNLOAD_DISTANCE) {
+			c->isQueuedForGen = false;
+			c->isQueuedForMesh = false;
+			return true;
+		}
 
+		return false;
 	});
 
 
@@ -62,6 +67,11 @@ void World::Tick() {
 		Chunk* c = generationQueue.front();
 		generationQueue.pop_front();
 
+		uint64_t key = GetChunkKey(c->cx, c->cz);
+		if (Chunks.find(key) == Chunks.end() || Chunks[key].get() != c) {
+			continue;
+		}
+		
 		c->generate();
 		c->isQueuedForGen = false;
 
@@ -77,6 +87,11 @@ void World::Tick() {
 	while (meshBudget-- > 0 && !meshQueue.empty()) {
 		Chunk* c = meshQueue.front();
 		meshQueue.pop_front();
+
+		uint64_t key = GetChunkKey(c->cx, c->cz);
+		if (Chunks.find(key) == Chunks.end() || Chunks[key].get() != c) {
+			continue;
+		}
 
 		c->buildMesh();
 		c->isQueuedForMesh = false;

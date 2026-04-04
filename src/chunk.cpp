@@ -362,7 +362,7 @@ void Chunk::buildMesh() {
 					else if (nz >= CHUNK_WIDTH) { targetCz = 2; lz = 0; }
 
 					Chunk* target = neighbors[targetCx][targetCz];
-					if (target == nullptr) return true;
+					if (target == nullptr || target->isQueuedForGen) return false;
 
 					return target->Get(lx, ny, lz) == 0;
 				};
@@ -439,6 +439,12 @@ void Chunk::buildMesh() {
 		}
 	}
 
+
+	if (vertices.empty()) {
+		vertexCount = 0;
+		return; // データがないなら転送せずに終わる
+	}
+
 	vertexCount = static_cast<int>(vertices.size() / 5);
 
 
@@ -476,30 +482,41 @@ void Chunk::render() {
 int Chunk::GetSurfaceHeight(int wx, int wz) const {
 	uint32_t seed = gWorld->getWorldSeed();
 
-	float continent = FractalNoise2D(wx * 0.0012f, wz * 0.0012f, seed + 10);
-	float hills = FractalNoise2D(wx * 0.0060f, wz * 0.0060f, seed + 20);
-	float mountainM = FractalNoise2D(wx * 0.0015f, wz * 0.0015f, seed + 30);
-	float mountainD = FractalNoise2D(wx * 0.0150f, wz * 0.0150f, seed + 40);
+	float continent = FractalNoise2D(wx * 0.0010f, wz * 0.0010f, seed + 10);
+	float hills = FractalNoise2D(wx * 0.0050f, wz * 0.0050f, seed + 20);
+	float biome = FractalNoise2D(wx * 0.0007f, wz * 0.0007f, seed + 100);
+
+	float mountainMask = FractalNoise2D(wx * 0.0010f, wz * 0.0010f, seed + 30);
+
+	float mountainBase = RidgedNoise2D(wx * 0.0014f, wz * 0.0014f, seed + 50); // 山塊
+	float mountainShape = RidgedNoise2D(wx * 0.0035f, wz * 0.0035f, seed + 60); // 中くらいの形
+	float mountainDetail = RidgedNoise2D(wx * 0.0100f, wz * 0.0100f, seed + 70); // 細部
 
 	float c = (continent - 0.5f) * 2.0f;
 	float h = (hills - 0.5f) * 2.0f;
-	float d = (mountainD - 0.5f) * 2.0f;
 
-	float mountain = 0.0f;
-	if (mountainM > 0.25f) {
-		float m = (mountainM - 0.25f) / 0.75f;
+	float height = 62.0f + c * 10.0f;
+
+	if (biome < 0.25f) {
+		// plains
+		height += h * 2.0f;
+	}
+	else if (biome < 0.45f) {
+		// hills
+		height += h * 8.0f;
+	}
+	else {
+		float m = (mountainMask - 0.10f) / 0.90f;
 		m = std::clamp(m, 0.0f, 1.0f);
-		float mountainWeight = std::pow(m, 1.5f);
+		float mw = std::pow(m, 1.4f);
 
-		mountain = mountainWeight * 160.0f;
-		mountain += d * 40.0f * mountainWeight;
+		float massif = std::pow(mountainBase, 1.2f) * 110.0f;      // 山塊の土台
+		float shape = std::pow(mountainShape, 1.6f) * 70.0f;      // 斜面と峰
+		float rough = (mountainDetail - 0.5f) * 18.0f;            // 表面の荒れ
+
+		height += (massif + shape + rough) * mw;
 	}
 
-	float height =
-		64.0f +
-		c * 18.0f +
-		h * 8.0f +
-		mountain;
-
-	return (int)std::round(height);
+	int finalHeight = (int)std::floor(height);
+	return std::clamp(finalHeight, 1, CHUNK_HEIGHT - 1);
 }

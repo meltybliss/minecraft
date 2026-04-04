@@ -60,7 +60,7 @@ void Player::UpdatePlrMovement(GLFWwindow* window, float dt) {
         }
     }
     else {
-        float speed = 10.0f * dt;
+        float speed = 50.0f * dt;
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
             pos += forward * speed;

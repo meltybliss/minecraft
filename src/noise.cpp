@@ -72,3 +72,10 @@ float FractalNoise2D(float x, float z, uint32_t seed) {
     
     return (total / maxValue) * 0.5f + 0.5f;
 }
+
+float RidgedNoise2D(float x, float z, uint32_t seed) {
+    float n = FractalNoise2D(x, z, seed); // 0..1
+    n = 1.0f - std::abs(n * 2.0f - 1.0f);
+    n = std::pow(n, 1.8f);
+    return n;
+}
