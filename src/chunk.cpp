@@ -206,6 +206,35 @@ void Chunk::CarveSphere(int cx, int cy, int cz, int radius) {
 	}
 }
 
+void Chunk::CarveEllipsoid(int cx, int cy, int cz, int rx, int ry, int rz) {
+	int minX = std::max(0, cx - rx);
+	int maxX = std::min(CHUNK_WIDTH - 1, cx + rx);
+
+	int minY = std::max(0, cy - ry);
+	int maxY = std::min(CHUNK_HEIGHT - 1, cy + ry);
+
+	int minZ = std::max(0, cz - rz);
+	int maxZ = std::min(CHUNK_WIDTH - 1, cz + rz);
+
+	for (int z = minZ; z <= maxZ; z++) {
+		for (int y = minY; y <= maxY; y++) {
+			for (int x = minX; x <= maxX; x++) {
+				float dx = static_cast<float>(x - cx);
+				float dy = static_cast<float>(y - cy);
+				float dz = static_cast<float>(z - cz);
+
+				float nx = (dx * dx) / (rx * rx);
+				float ny = (dy * dy) / (ry * ry);
+				float nz = (dz * dz) / (rz * rz);
+
+				if (nx + ny + nz <= 1.0f) {
+					Set(x, y, z, static_cast<unsigned int>(BlockType::AIR));
+				}
+			}
+		}
+	}
+}
+
 void Chunk::GenerateTrees(std::mt19937& rng) {
 	std::uniform_int_distribution<int> chance(0, 99);
 	std::uniform_int_distribution<int> heightDist(4, 6);
@@ -369,25 +398,20 @@ void Chunk::ApplyCavesFromSourceChunk(int scx, int scz) {
 
 	
 	for (const auto& cave : it->second) {
-		ApplySingleCave(cave);
+		ApplySingleCave(cave, 0);
 	}
 
 
 }
 
-void Chunk::ApplySingleCave(const CaveSeed& cave) {
-	std::mt19937 stepRng(
-		makeChunkSeed(
-			static_cast<uint32_t>(cave.startX * 31.0f + cave.startZ * 17.0f),
-			static_cast<int>(cave.startX),
-			static_cast<int>(cave.startZ)
-		)
-	);
+void Chunk::ApplySingleCave(const CaveSeed& cave, int depth) {
+	std::mt19937 stepRng(cave.stepSeed);
 
 	std::uniform_real_distribution<float> turnDelta(-cave.turnStrength, cave.turnStrength);
 	std::uniform_real_distribution<float> riseDelta(-cave.riseStrength, cave.riseStrength);
 	std::uniform_real_distribution<float> radiusDelta(-cave.radiusJitter, cave.radiusJitter);
 	std::uniform_int_distribution<int> roomRoll(0, 99);
+	std::uniform_int_distribution<int> branchRoll(0, 99);
 
 	float x = cave.startX;
 	float y = cave.startY;
@@ -406,6 +430,43 @@ void Chunk::ApplySingleCave(const CaveSeed& cave) {
 
 
 	for (int i = 0; i < cave.steps; i++) {
+		float margin = cave.radiusMax + 8.0f;
+		if (x < chunkMinX - margin || x > chunkMaxX + margin ||
+			z < chunkMinZ - margin || z > chunkMaxZ + margin) {
+			break;
+		}
+
+		if (depth < 2 && branchRoll(stepRng) < cave.branchChancePercent) {
+			std::uniform_real_distribution<float> branchAngle(0.6f, 1.2f);
+			std::uniform_int_distribution<int> leftRight(0, 1);
+
+			CaveSeed branch = cave;
+			branch.startX = x;
+			branch.startY = y;
+			branch.startZ = z;
+
+			float angle = branchAngle(stepRng);
+			if (leftRight(stepRng) == 0) angle = -angle;
+
+			branch.yaw = yaw + angle;
+			branch.pitch = pitch * 0.5f;
+
+			branch.steps = std::max(12, (cave.steps - i) / 2);
+
+			branch.radiusMin = std::max(0.8f, cave.radiusMin * 0.8f);
+			branch.radiusStart = std::max(branch.radiusMin, radius * 0.8f);
+			branch.radiusMax = std::max(branch.radiusStart + 0.5f, cave.radiusMax * 0.85f);
+
+			branch.roomChancePercent = std::max(0, cave.roomChancePercent - 2);
+			branch.branchChancePercent = std::max(0, cave.branchChancePercent - 1);
+
+			branch.stepSeed = stepRng();
+
+			branch.type = CaveType::ThinBranch;
+
+			ApplySingleCave(branch, depth + 1);
+		}
+
 		int carveRadius = std::max(1, static_cast<int>(std::round(radius)));
 		
 		if (x + carveRadius >= chunkMinX && x - carveRadius <= chunkMaxX &&
@@ -415,24 +476,46 @@ void Chunk::ApplySingleCave(const CaveSeed& cave) {
 			int localY = static_cast<int>(std::round(y));
 			int localZ = static_cast<int>(std::round(z)) - chunkMinZ;
 
-			CarveSphere(localX, localY, localZ, carveRadius);
+			int rx, ry, rz;
+
+			switch (cave.type) {
+			case CaveType::MainTunnel:
+				rx = std::max(1, (int)std::round(radius * 1.5f));
+				ry = std::max(1, (int)std::round(radius * 0.75f));
+				rz = std::max(1, (int)std::round(radius * 1.2f));
+				break;
+
+			case CaveType::ThinBranch:
+				rx = std::max(1, (int)std::round(radius * 1.2f));
+				ry = std::max(1, (int)std::round(radius * 0.8f));
+				rz = std::max(1, (int)std::round(radius * 1.0f));
+				break;
+
+			case CaveType::Roomy:
+				rx = std::max(1, (int)std::round(radius * 1.8f));
+				ry = std::max(1, (int)std::round(radius * 1.1f));
+				rz = std::max(1, (int)std::round(radius * 1.6f));
+				break;
+			}
+
+			CarveEllipsoid(localX, localY, localZ, rx, ry, rz);
 
 			if (roomRoll(stepRng) < cave.roomChancePercent) {
-				CarveSphere(localX, localY, localZ, carveRadius + 2);
+				CarveEllipsoid(localX, localY, localZ, rx + 2, ry + 1, rz + 2);
 			}
 		}
 
 		yaw += turnDelta(stepRng);
-		pitch += riseDelta(stepRng);
-		pitch = std::clamp(pitch, -0.45f, 0.45f);
+		pitch += riseDelta(stepRng) * 0.2f;
+		pitch = std::clamp(pitch, -0.18f, 0.18f);
 
 		float dx = std::cos(pitch) * std::cos(yaw);
 		float dy = std::sin(pitch);
 		float dz = std::cos(pitch) * std::sin(yaw);
 
-		x += dx;
-		y += dy;
-		z += dz;
+		x += dx * 0.6f;
+		y += dy * 0.6f;
+		z += dz * 0.6f;
 
 		if (i % 4 == 0) {
 			cachedSurfaceY = GetSurfaceHeight(static_cast<int>(std::round(x)), static_cast<int>(std::round(z)));
@@ -473,6 +556,7 @@ std::vector<CaveSeed> Chunk::BuildCavesFromSourceChunk(int scx, int scz) {
 	std::uniform_real_distribution<float> riseDist(0.04f, 0.12f);
 	std::uniform_real_distribution<float> jitterDist(0.08f, 0.18f);
 	std::uniform_int_distribution<int> roomChanceDist(3, 10);
+	std::uniform_int_distribution<int> typeRoll(0, 99);
 
 	for (int i = 0; i < caveCount; i++) {
 		int lx = xDist(rng);
@@ -487,19 +571,33 @@ std::vector<CaveSeed> Chunk::BuildCavesFromSourceChunk(int scx, int scz) {
 		int wy = std::clamp(surfaceY - depthDist(rng), minY, maxY);
 
 		CaveSeed cave{};
+
+		
+		int t = typeRoll(rng);
+
+		if (t < 80) {
+			cave.type = CaveType::MainTunnel;
+		}
+		else {
+			cave.type = CaveType::Roomy;
+		}
+		cave.stepSeed = rng();
+
 		cave.startX = static_cast<float>(wx);
 		cave.startY = static_cast<float>(wy);
 		cave.startZ = static_cast<float>(wz);
 
 		cave.yaw = angleDist(rng);
 		cave.pitch = pitchDist(rng);
-		cave.steps = stepDist(rng);
+		cave.steps = stepDist(rng) * 3;
 
 		cave.radiusStart = radiusStartDist(rng);
 		cave.radiusMin = 1.2f;
 		cave.radiusMax = 3.8f;
 
 		cave.turnStrength = turnDist(rng);
+		cave.turnStrength *= 0.5f;
+
 		cave.riseStrength = riseDist(rng);
 		cave.radiusJitter = jitterDist(rng);
 
@@ -545,6 +643,8 @@ void Chunk::GenerateCave(std::mt19937& rng) {
 	int steps = stepCountDist(rng);
 
 	for (int i = 0; i < steps; i++) {
+
+
 		int carveRadius = std::max(1, static_cast<int>(std::round(radius)));
 		CarveSphere((int)std::round(x), (int)std::round(y), (int)std::round(z), carveRadius);
 

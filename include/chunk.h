@@ -79,6 +79,7 @@ struct Chunk {
 	}
 
 	void CarveSphere(int cx, int cy, int cz, int radius);
+	void CarveEllipsoid(int cx, int cy, int cz, int rx, int ry, int rz);
 
 	static uint32_t makeChunkSeed(uint32_t worldSeed, int cx, int cz);
 	static uint64_t GetChunkKey(int32_t scx, int32_t scz);
@@ -94,7 +95,7 @@ struct Chunk {
 	void ApplyCaves();
 	void ApplyCavesFromSourceChunk(int scx, int scz);
 	std::vector<CaveSeed> BuildCavesFromSourceChunk(int scx, int scz);
-	void ApplySingleCave(const CaveSeed& cave);
+	void ApplySingleCave(const CaveSeed& cave, int depth);
 
 	int GetSurfaceHeight(int wx, int wz) const;
 

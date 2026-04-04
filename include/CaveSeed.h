@@ -1,5 +1,18 @@
 #pragma once
+#include <stdint.h>
+
+enum class CaveType {
+    MainTunnel,
+    ThinBranch,
+    Roomy
+};
+
 struct CaveSeed {
+    uint32_t stepSeed;
+    
+
+    CaveType type;
+
     float startX;
     float startY;
     float startZ;
@@ -17,6 +30,6 @@ struct CaveSeed {
     float radiusJitter;
 
     int roomChancePercent;
+    int branchChancePercent;
 
-    uint32_t stepSeed;
 };
