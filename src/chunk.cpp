@@ -487,35 +487,43 @@ int Chunk::GetSurfaceHeight(int wx, int wz) const {
 	float biome = FractalNoise2D(wx * 0.0007f, wz * 0.0007f, seed + 100);
 
 	float mountainMask = FractalNoise2D(wx * 0.0010f, wz * 0.0010f, seed + 30);
-
-	float mountainBase = RidgedNoise2D(wx * 0.0014f, wz * 0.0014f, seed + 50); // 山塊
-	float mountainShape = RidgedNoise2D(wx * 0.0035f, wz * 0.0035f, seed + 60); // 中くらいの形
-	float mountainDetail = RidgedNoise2D(wx * 0.0100f, wz * 0.0100f, seed + 70); // 細部
+	float mountainBase = FractalNoise2D(wx * 0.0014f, wz * 0.0014f, seed + 50);   // smooth にする
+	float mountainShape = RidgedNoise2D(wx * 0.0035f, wz * 0.0035f, seed + 60);
+	float mountainDetail = FractalNoise2D(wx * 0.0100f, wz * 0.0100f, seed + 70);
 
 	float c = (continent - 0.5f) * 2.0f;
 	float h = (hills - 0.5f) * 2.0f;
 
-	float height = 62.0f + c * 10.0f;
+	float baseHeight = 62.0f + c * 10.0f;
 
+	// plains/hills 側
+	float lowlandHeight = baseHeight;
 	if (biome < 0.25f) {
-		// plains
-		height += h * 2.0f;
-	}
-	else if (biome < 0.45f) {
-		// hills
-		height += h * 8.0f;
+		lowlandHeight += h * 2.0f;
 	}
 	else {
-		float m = (mountainMask - 0.10f) / 0.90f;
-		m = std::clamp(m, 0.0f, 1.0f);
-		float mw = std::pow(m, 1.4f);
-
-		float massif = std::pow(mountainBase, 1.2f) * 110.0f;      // 山塊の土台
-		float shape = std::pow(mountainShape, 1.6f) * 70.0f;      // 斜面と峰
-		float rough = (mountainDetail - 0.5f) * 18.0f;            // 表面の荒れ
-
-		height += (massif + shape + rough) * mw;
+		lowlandHeight += h * 8.0f;
 	}
+
+	// mountains 側
+	float m = (mountainMask - 0.10f) / 0.90f;
+	m = std::clamp(m, 0.0f, 1.0f);
+	float mw = std::pow(m, 1.4f);
+
+	float massif = std::pow(mountainBase, 1.15f) * 130.0f;
+	float shape = std::pow(mountainShape, 1.8f) * 80.0f;
+	float rough = (mountainDetail - 0.5f) * 16.0f;
+
+	float mountainHeight = baseHeight + (massif + shape + rough) * mw;
+
+	// hills -> mountains を滑らかに補間
+	float t = (biome - 0.35f) / (0.60f - 0.35f);
+	t = std::clamp(t, 0.0f, 1.0f);
+
+	// smoothstep
+	t = t * t * (3.0f - 2.0f * t);
+
+	float height = lowlandHeight * (1.0f - t) + mountainHeight * t;
 
 	int finalHeight = (int)std::floor(height);
 	return std::clamp(finalHeight, 1, CHUNK_HEIGHT - 1);
