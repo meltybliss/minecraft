@@ -29,14 +29,14 @@ void World::Tick() {
 			if (Chunks.find(key) == Chunks.end()) {
 
 
-				auto c = std::make_unique<Chunk>();
+				auto c = std::make_shared<Chunk>();
 				c->cx = x;
 				c->cz = z;
 
 				if (!c->isQueuedForGen) {
-					generationQueue.push_back(c.get());
+					generationQueue.push_back(c);
 					c->isQueuedForGen = true;
-					Chunks[key] = std::move(c);
+					Chunks[key] = c;
 					
 				}
 
@@ -64,37 +64,33 @@ void World::Tick() {
 
 	int genBudget = 3;
 	while (genBudget-- > 0 && !generationQueue.empty()) {
-		Chunk* c = generationQueue.front();
+		std::weak_ptr<Chunk> wp = generationQueue.front();
 		generationQueue.pop_front();
 
-		uint64_t key = GetChunkKey(c->cx, c->cz);
-		if (Chunks.find(key) == Chunks.end() || Chunks[key].get() != c) {
-			continue;
-		}
-		
-		c->generate();
-		c->isQueuedForGen = false;
+		if (auto c = wp.lock()) {//shared‚Ì‚Ù‚¤‚ª¶‚«‚Ä‚¢‚ê‚Îshared ptr‚ªweak ptr‚É‚æ‚è•Ô‚éB‚¶‚á‚È‚¢‚È‚çnullptr
+			c->generate();
+			c->isQueuedForGen = false;
 
-		MarkChunkDirty(c->cx, c->cz);
-		MarkChunkDirty(c->cx + 1, c->cz);
-		MarkChunkDirty(c->cx - 1, c->cz);
-		MarkChunkDirty(c->cx, c->cz + 1);
-		MarkChunkDirty(c->cx, c->cz - 1);
+			MarkChunkDirty(c->cx, c->cz);
+			MarkChunkDirty(c->cx + 1, c->cz);
+			MarkChunkDirty(c->cx - 1, c->cz);
+			MarkChunkDirty(c->cx, c->cz + 1);
+			MarkChunkDirty(c->cx, c->cz - 1);
+		}
+	
 	}
 
 
 	int meshBudget = 3;
 	while (meshBudget-- > 0 && !meshQueue.empty()) {
-		Chunk* c = meshQueue.front();
+		std::weak_ptr<Chunk> wp = meshQueue.front();
 		meshQueue.pop_front();
 
-		uint64_t key = GetChunkKey(c->cx, c->cz);
-		if (Chunks.find(key) == Chunks.end() || Chunks[key].get() != c) {
-			continue;
-		}
+		if (auto c = wp.lock()) {
 
-		c->buildMesh();
-		c->isQueuedForMesh = false;
+			c->buildMesh();
+			c->isQueuedForMesh = false;
+		}
 
 	}
 
@@ -140,11 +136,11 @@ void World::MarkChunkDirty(int32_t cx, int32_t cz) {
 	auto it = Chunks.find(key);
 	if (it == Chunks.end() || !it->second) return;
 	
-	Chunk* c = it->second.get();
+	std::shared_ptr<Chunk> c = it->second;
 	c->isDirty = true;
 
 	if (!c->isQueuedForMesh) {
-		meshQueue.push_back(c);
+		meshQueue.push_back(std::weak_ptr<Chunk>(c));
 		c->isQueuedForMesh = true;
 	}
 }
