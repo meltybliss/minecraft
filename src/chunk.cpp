@@ -746,7 +746,8 @@ void Chunk::buildMesh() {
 					else if (nz >= CHUNK_WIDTH) { targetCz = 2; lz = 0; }
 
 					Chunk* target = neighbors[targetCx][targetCz];
-					if (target == nullptr) return true;
+					if (target == nullptr) return false;
+					if (!target->isGenerated) return false;
 
 					return target->Get(lx, ny, lz) == 0;
 				};

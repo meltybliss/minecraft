@@ -40,6 +40,8 @@ void World::Tick() {
 	int32_t curCx = static_cast<int32_t>(std::floor(pos.x / chunkWorldSize));
 	int32_t curCz = static_cast<int32_t>(std::floor(pos.z / chunkWorldSize));
 
+	bool movedToNewChunk = (curCx != lastPlrChunkCx) || (curCz != lastPlrChunkCz);
+
 
 	for (int32_t x = curCx - RENDER_DISTANCE; x <= curCx + RENDER_DISTANCE; x++) {
 		for (int32_t z = curCz - RENDER_DISTANCE; z <= curCz + RENDER_DISTANCE; z++) {
@@ -65,7 +67,7 @@ void World::Tick() {
 		}
 	}
 
-	std::erase_if(Chunks, [&](const auto& item) {
+	/**std::erase_if(Chunks, [&](const auto& item) {
 		const auto& c = item.second;
 		if (c == nullptr) return false;
 
@@ -79,52 +81,22 @@ void World::Tick() {
 		}
 
 		return false;
-	});
+	});*/
+
+	
 
 
-	if (lastPlrChunkCx != curCx || lastPlrChunkCz != curCz) {
+	if (movedToNewChunk) {
 		lastPlrChunkCx = curCx;
 		lastPlrChunkCz = curCz;
 
 		RebuildMeshQueue(curCx, curCz);
+		GatherUnloadCandidates(curCx, curCz);
 	}
 
-
-	int genBudget = 3;
-	while (genBudget-- > 0 && !generationQueue.empty()) {
-		std::weak_ptr<Chunk> wp = generationQueue.front();
-		generationQueue.pop_front();
-
-
-		if (auto c = wp.lock()) {
-			c->generate();
-			c->isQueuedForGen = false;
-
-			MarkChunkDirty(c->cx, c->cz);
-			MarkChunkDirty(c->cx + 1, c->cz);
-			MarkChunkDirty(c->cx - 1, c->cz);
-			MarkChunkDirty(c->cx, c->cz + 1);
-			MarkChunkDirty(c->cx, c->cz - 1);
-		}
-	}
-
-
-	int meshBudget = 3;
-	while (meshBudget-- > 0 && !meshQueue.empty()) {
-		std::shared_ptr<Chunk> c = meshQueue.top();
-		meshQueue.pop();
-
-		if (!c) continue;
-
-		c->isQueuedForMesh = false;
-		if (!c->isDirty) continue;
-
-		c->buildMesh();
-		
-
-	}
-
-
+	ProcessGenQueue();
+	ProcessMeshQueue();
+	ProcessUnloadQueue(curCx, curCz);
 	ProcessGpuDeletes();
 }
 
@@ -336,8 +308,26 @@ void World::RebuildMeshQueue(int32_t curCx, int32_t curCz) {
  }
 
 
+void World::GatherUnloadCandidates(int32_t curCx, int32_t curCz) {
+
+	for (const auto& [key, c] : Chunks) {
+		if (c == nullptr) continue;
+
+		int32_t dx = std::abs(c->cx - curCx);
+		int32_t dz = std::abs(c->cz - curCz);
+
+		if (dx >= UNLOAD_DISTANCE || dz >= UNLOAD_DISTANCE) {
+			if (c->isQueuedForUnload) continue;
+
+			unloadQueue.push_back(key);
+			c->isQueuedForUnload = true;
+		}
+	}
+
+}
+
 void World::ProcessGpuDeletes() {
-	int deleteBudged = 8;
+	int deleteBudged = 3;
 
 	while (deleteBudged-- > 0 && !gpuDeleteQueue.empty()) {
 		auto job = gpuDeleteQueue.front();
@@ -349,4 +339,83 @@ void World::ProcessGpuDeletes() {
 	}
 
 
+}
+
+
+void World::ProcessGenQueue() {
+	int genBudget = 3;
+	while (genBudget-- > 0 && !generationQueue.empty()) {
+		std::weak_ptr<Chunk> wp = generationQueue.front();
+		generationQueue.pop_front();
+
+
+		if (auto c = wp.lock()) {
+			c->generate();
+			c->isGenerated = true;
+			c->isQueuedForGen = false;
+
+			MarkChunkDirty(c->cx, c->cz);
+			MarkChunkDirty(c->cx + 1, c->cz);
+			MarkChunkDirty(c->cx - 1, c->cz);
+			MarkChunkDirty(c->cx, c->cz + 1);
+			MarkChunkDirty(c->cx, c->cz - 1);
+		}
+	}
+
+
+}
+
+
+void World::ProcessMeshQueue() {
+
+	int meshBudget = 3;
+	while (meshBudget-- > 0 && !meshQueue.empty()) {
+		std::shared_ptr<Chunk> c = meshQueue.top();
+		meshQueue.pop();
+
+		if (!c) continue;
+
+		c->isQueuedForMesh = false;
+		if (!c->isDirty) continue;
+
+		c->buildMesh();
+
+
+	}
+}
+
+
+void World::ProcessUnloadQueue(int32_t curCx, int32_t curCz) {
+
+
+	int unloadBudget = 5;
+	while (unloadBudget-- > 0 && !unloadQueue.empty()) {
+		uint64_t key = unloadQueue.front();
+		unloadQueue.pop_front();
+
+		auto it = Chunks.find(key);
+		if (it == Chunks.end()) continue;
+
+		auto c = it->second;
+		if (!c) {
+			Chunks.erase(key);
+			continue;
+		}
+
+		int32_t dx = std::abs(c->cx - curCx);
+		int32_t dz = std::abs(c->cz - curCz);
+
+		if (dx >= UNLOAD_DISTANCE || dz >= UNLOAD_DISTANCE) {
+			c->isQueuedForGen = false;
+			c->isQueuedForMesh = false;
+			c->isQueuedForUnload = false;
+			Chunks.erase(key);
+			std::cout << "aa" << curCx << "," << curCz << "\n";
+		}
+		else {
+			c->isQueuedForUnload = false;
+		}
+
+
+	}
 }

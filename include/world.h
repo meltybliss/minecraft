@@ -68,7 +68,7 @@ private:
 	> meshQueue;
 
 	std::deque<GpuDeleteJob> gpuDeleteQueue;
-
+	std::deque<uint64_t> unloadQueue;
 	
 
 
@@ -87,8 +87,12 @@ private:
 	void MarkChunkDirty(int32_t cx, int32_t cz);
 	
 	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
-	void ProcessGpuDeletes();
+	void GatherUnloadCandidates(int32_t curCx, int32_t curCz);
 
+	void ProcessGenQueue();
+	void ProcessMeshQueue();
+	void ProcessGpuDeletes();
+	void ProcessUnloadQueue(int32_t curCx, int32_t curCz);
 };
 
 extern World* gWorld;

@@ -36,10 +36,12 @@ struct Chunk {
 	void buildMesh();
 	void render();
 
+	bool isGenerated = false;
 	bool isEdited = false;
 	bool isDirty = false;
 	bool isQueuedForGen = false;
 	bool isQueuedForMesh = false;
+	bool isQueuedForUnload = false;
 
 	static constexpr int CHUNK_HEIGHT = 256;
 	static constexpr int CHUNK_WIDTH = 16;
