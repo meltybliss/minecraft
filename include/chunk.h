@@ -32,7 +32,6 @@ struct Chunk {
 	int32_t cx;
 	int32_t cz;
 
-
 	void generate();
 	void buildMesh();
 	void render();

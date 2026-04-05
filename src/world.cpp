@@ -8,7 +8,7 @@ static int32_t FloorDiv(int v, int b) {
 	return static_cast<int32_t>(std::floor(static_cast<float>(v) / b));
 }
 
-World::World() : worldSeed(123456789u) {
+World::World() : worldSeed(123456789u), meshQueue(ChunkPriority(0, 0)) {
 	gWorld = this;
 
 	for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
@@ -82,12 +82,21 @@ void World::Tick() {
 	});
 
 
+	if (lastPlrChunkCx != curCx || lastPlrChunkCz != curCz) {
+		lastPlrChunkCx = curCx;
+		lastPlrChunkCz = curCz;
+
+		RebuildMeshQueue(curCx, curCz);
+	}
+
+
 	int genBudget = 3;
 	while (genBudget-- > 0 && !generationQueue.empty()) {
 		std::weak_ptr<Chunk> wp = generationQueue.front();
-		generationQueue.pop_front();
+		generationQueue.pop_back();
 
-		if (auto c = wp.lock()) {//shared‚Ì‚Ù‚¤‚ª¶‚«‚Ä‚¢‚ê‚Îshared ptr‚ªweak ptr‚É‚æ‚è•Ô‚éB‚¶‚á‚È‚¢‚È‚çnullptr
+
+		if (auto c = wp.lock()) {
 			c->generate();
 			c->isQueuedForGen = false;
 
@@ -97,20 +106,16 @@ void World::Tick() {
 			MarkChunkDirty(c->cx, c->cz + 1);
 			MarkChunkDirty(c->cx, c->cz - 1);
 		}
-	
 	}
 
 
 	int meshBudget = 3;
 	while (meshBudget-- > 0 && !meshQueue.empty()) {
-		std::weak_ptr<Chunk> wp = meshQueue.front();
-		meshQueue.pop_front();
+		std::shared_ptr<Chunk> c = meshQueue.top();
+		meshQueue.pop();
 
-		if (auto c = wp.lock()) {
-
-			c->buildMesh();
-			c->isQueuedForMesh = false;
-		}
+		c->buildMesh();
+		c->isQueuedForMesh = false;
 
 	}
 
@@ -160,7 +165,7 @@ void World::MarkChunkDirty(int32_t cx, int32_t cz) {
 	c->isDirty = true;
 
 	if (!c->isQueuedForMesh) {
-		meshQueue.push_back(std::weak_ptr<Chunk>(c));
+		meshQueue.push(std::shared_ptr<Chunk>(c));
 		c->isQueuedForMesh = true;
 	}
 }
@@ -290,3 +295,31 @@ HitResult World::TraceRay(Ray& ray, float maxDist) {
 	return hit;
 }
 
+
+
+void World::RebuildMeshQueue(int32_t curCx, int32_t curCz) {
+	std::vector<std::shared_ptr<Chunk>> pedding;
+
+	while (!meshQueue.empty()) {
+		auto& c = meshQueue.top();
+		meshQueue.pop();
+
+		if (!c) continue;
+		if (!c->isDirty) continue;
+
+		pedding.push_back(c);
+
+	}
+
+	std::priority_queue<
+		std::shared_ptr<Chunk>,
+		std::vector<std::shared_ptr<Chunk>>,
+		ChunkPriority> newQueue(ChunkPriority{curCx, curCz});
+
+	for (const auto& c : pedding) {
+		newQueue.push(c);
+	}
+
+	meshQueue = std::move(newQueue);
+
+ }

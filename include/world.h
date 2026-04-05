@@ -9,7 +9,9 @@
 #include "ShaderInitUtils.h"
 #include "Mat4.h"
 #include <deque>
+#include <queue>
 #include "Vec2.h"
+#include "ChunkPriority.h"
 
 class World {
 public:
@@ -35,7 +37,7 @@ public:
 			return it->second;
 		}
 
-		return 10;
+		return INT_MAX;
 	}
 private:
 
@@ -44,12 +46,30 @@ private:
 	int RENDER_DISTANCE = 30;
 	int UNLOAD_DISTANCE = 34;
 
-
+	int32_t lastPlrChunkCx = INT_MAX;
+	int32_t lastPlrChunkCz = INT_MAX;
 
 	std::unordered_map<uint64_t, std::shared_ptr<Chunk>> Chunks;
 
+	/**std::priority_queue<
+		std::shared_ptr<Chunk>,
+		std::vector<std::shared_ptr<Chunk>>,
+		ChunkPriority
+	> generationQueue;
+	*/
+
 	std::deque<std::weak_ptr<Chunk>> generationQueue;
-	std::deque<std::weak_ptr<Chunk>> meshQueue;
+	
+	std::priority_queue<
+		std::shared_ptr<Chunk>,
+		std::vector<std::shared_ptr<Chunk>>,
+		ChunkPriority
+	> meshQueue;
+
+	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
+
+
+	//std::deque<std::weak_ptr<Chunk>> meshQueue;
 	 
 	std::vector<Vec2> spiralOffsets;
 	std::unordered_map<uint64_t, int> spiralRank;//spiralOffset“à‚Å‚Ìindex‚ð“¾‚é‚½‚ß‚Ì‚à‚Ì
