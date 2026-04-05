@@ -44,7 +44,7 @@ public:
 	}
 
 	void EnqueueGpuDelete(GLuint vao, GLuint vbo) {
-		gpuDelteQueue.push_back({ vao, vbo });
+		gpuDeleteQueue.push_back({ vao, vbo });
 	}
 
 private:
