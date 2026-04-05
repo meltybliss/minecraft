@@ -43,28 +43,28 @@ void World::Tick() {
 	bool movedToNewChunk = (curCx != lastPlrChunkCx) || (curCz != lastPlrChunkCz);
 
 
-	for (int32_t x = curCx - RENDER_DISTANCE; x <= curCx + RENDER_DISTANCE; x++) {
-		for (int32_t z = curCz - RENDER_DISTANCE; z <= curCz + RENDER_DISTANCE; z++) {
+	for (const auto& off : spiralOffsets) {
+		int32_t x = curCx + off.x;
+		int32_t z = curCz + off.z;
 
 			
-			uint64_t key = GetChunkKey(x, z);
-			if (Chunks.find(key) == Chunks.end()) {
+		uint64_t key = GetChunkKey(x, z);
+		if (Chunks.find(key) == Chunks.end()) {
 
 
-				auto c = std::make_shared<Chunk>();
-				c->cx = x;
-				c->cz = z;
+			auto c = std::make_shared<Chunk>();
+			c->cx = x;
+			c->cz = z;
 
-				if (!c->isQueuedForGen) {
-					generationQueue.push_back(c);
-					c->isQueuedForGen = true;
-					Chunks[key] = c;
+			if (!c->isQueuedForGen) {
+				generationQueue.push_back(c);
+				c->isQueuedForGen = true;
+				Chunks[key] = c;
 					
-				}
-
-				
 			}
+
 		}
+		
 	}
 
 	/**std::erase_if(Chunks, [&](const auto& item) {
@@ -410,7 +410,7 @@ void World::ProcessUnloadQueue(int32_t curCx, int32_t curCz) {
 			c->isQueuedForMesh = false;
 			c->isQueuedForUnload = false;
 			Chunks.erase(key);
-			std::cout << "aa" << curCx << "," << curCz << "\n";
+			
 		}
 		else {
 			c->isQueuedForUnload = false;

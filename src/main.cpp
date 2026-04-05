@@ -9,6 +9,7 @@
 #include "ShaderInitUtils.h"
 
 
+
 int main() {
 	glfwInit();
 	GLFWwindow* window = glfwCreateWindow(800, 600, "MyWindow", NULL, NULL);
