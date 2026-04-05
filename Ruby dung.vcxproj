@@ -149,6 +149,7 @@
     <ClInclude Include="include\camera.h" />
     <ClInclude Include="include\CaveSeed.h" />
     <ClInclude Include="include\chunk.h" />
+    <ClInclude Include="include\ChunkPriority.h" />
     <ClInclude Include="include\game.h" />
     <ClInclude Include="include\glad\glad.h" />
     <ClInclude Include="include\GLFW\glfw3.h" />
@@ -161,6 +162,7 @@
     <ClInclude Include="include\ShaderInitUtils.h" />
     <ClInclude Include="include\stb_image.h" />
     <ClInclude Include="include\texture.h" />
+    <ClInclude Include="include\Vec2.h" />
     <ClInclude Include="include\Vec3.h" />
     <ClInclude Include="include\world.h" />
   </ItemGroup>

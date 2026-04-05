@@ -848,6 +848,7 @@ void Chunk::buildMesh() {
 	glBindVertexArray(0);
 
 	isDirty = false;
+	isEdited = false;
 
 }
 

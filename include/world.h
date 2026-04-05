@@ -9,7 +9,7 @@
 #include "ShaderInitUtils.h"
 #include "Mat4.h"
 #include <deque>
-
+#include "Vec2.h"
 
 class World {
 public:
@@ -28,6 +28,15 @@ public:
 
 	uint32_t getWorldSeed() const { return worldSeed; }
 
+	int GetSpiralRank(int offx, int offz) const {
+		auto it = spiralRank.find(GetChunkKey(offx, offz));
+
+		if (it != spiralRank.end()) {
+			return it->second;
+		}
+
+		return 10;
+	}
 private:
 
 	uint32_t worldSeed;
@@ -42,11 +51,14 @@ private:
 	std::deque<std::weak_ptr<Chunk>> generationQueue;
 	std::deque<std::weak_ptr<Chunk>> meshQueue;
 	 
+	std::vector<Vec2> spiralOffsets;
+	std::unordered_map<uint64_t, int> spiralRank;//spiralOffset“à‚Å‚Ìindex‚ð“¾‚é‚½‚ß‚Ì‚à‚Ì
 
 
 	uint64_t GetChunkKey(int32_t cx, int32_t cz) const {
 		return (static_cast<uint64_t>(static_cast<uint32_t>(cx)) << 32 | static_cast<uint32_t>(cz));
 	}
+
 
 
 	void MarkChunkDirty(int32_t cx, int32_t cz);

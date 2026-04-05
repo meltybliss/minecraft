@@ -10,6 +10,26 @@ static int32_t FloorDiv(int v, int b) {
 
 World::World() : worldSeed(123456789u) {
 	gWorld = this;
+
+	for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
+		for (int z = -RENDER_DISTANCE; z <= RENDER_DISTANCE; z++) {
+			spiralOffsets.push_back(Vec2{x, z });
+		}
+	}
+
+	std::sort(spiralOffsets.begin(), spiralOffsets.end(), [](const Vec2& a, const Vec2& b) {
+
+		int distA = a.x * a.x + a.z * a.z;
+		int distB = b.x * b.x + b.z * b.z;
+
+		return distA < distB;
+
+	});
+
+	for (size_t i = 0; i < spiralOffsets.size(); i++) {
+		const Vec2& off = spiralOffsets[i];
+		spiralRank[GetChunkKey(off.x, off.z)] = i;
+	}
 }
 
 void World::Tick() {
@@ -145,7 +165,7 @@ void World::MarkChunkDirty(int32_t cx, int32_t cz) {
 	}
 }
 
-bool World::SetBlockGlobal(int bx, int by, int bz, unsigned int block) {
+bool World::SetBlockGlobal(int bx, int by, int bz, unsigned int block) {//player‚ª’¼ÚŒÄ‚Ô—p
 	int32_t cx = FloorDiv(bx, Chunk::CHUNK_WIDTH);
 	int32_t cz = FloorDiv(bz, Chunk::CHUNK_WIDTH);
 
@@ -167,7 +187,9 @@ bool World::SetBlockGlobal(int bx, int by, int bz, unsigned int block) {
 	bool ok = c->Set(lx, ly, lz, block);
 	if (!ok) return false;
 
+	
 	MarkChunkDirty(cx, cz);
+	c->isEdited = true;
 
 	if (lx == 0) MarkChunkDirty(cx - 1, cz);
 	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkDirty(cx + 1, cz);
