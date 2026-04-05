@@ -12,6 +12,9 @@
 #include <queue>
 #include "Vec2.h"
 #include "ChunkPriority.h"
+#include <climits>
+#include "GpuDeleteJob.h"
+
 
 class World {
 public:
@@ -39,6 +42,11 @@ public:
 
 		return INT_MAX;
 	}
+
+	void EnqueueGpuDelete(GLuint vao, GLuint vbo) {
+		gpuDelteQueue.push_back({ vao, vbo });
+	}
+
 private:
 
 	uint32_t worldSeed;
@@ -51,13 +59,6 @@ private:
 
 	std::unordered_map<uint64_t, std::shared_ptr<Chunk>> Chunks;
 
-	/**std::priority_queue<
-		std::shared_ptr<Chunk>,
-		std::vector<std::shared_ptr<Chunk>>,
-		ChunkPriority
-	> generationQueue;
-	*/
-
 	std::deque<std::weak_ptr<Chunk>> generationQueue;
 	
 	std::priority_queue<
@@ -66,7 +67,9 @@ private:
 		ChunkPriority
 	> meshQueue;
 
-	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
+	std::deque<GpuDeleteJob> gpuDeleteQueue;
+
+	
 
 
 	//std::deque<std::weak_ptr<Chunk>> meshQueue;
@@ -83,7 +86,8 @@ private:
 
 	void MarkChunkDirty(int32_t cx, int32_t cz);
 	
-
+	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
+	void ProcessGpuDeletes();
 
 };
 

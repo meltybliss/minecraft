@@ -1,13 +1,15 @@
 #include "chunk.h"
 #include "world.h"
 
-
 Chunk::~Chunk() {
-	if (vao != 0) glDeleteVertexArrays(1, &vao);
-	if (vbo != 0) glDeleteBuffers(1, &vbo);
+	
+	if (vao != 0 && vbo != 0) {
 
+		gWorld->EnqueueGpuDelete(vao, vbo);
+		vao = 0;
+		vbo = 0;
+	}
 }
-
 uint32_t Chunk::makeChunkSeed(uint32_t worldSeed, int cx, int cz) {
 	uint32_t x = static_cast<uint32_t>(cx) * 73856093u;
 	uint32_t z = static_cast<uint32_t>(cz) * 19349663u;
@@ -744,7 +746,7 @@ void Chunk::buildMesh() {
 					else if (nz >= CHUNK_WIDTH) { targetCz = 2; lz = 0; }
 
 					Chunk* target = neighbors[targetCx][targetCz];
-					if (target == nullptr || target->isQueuedForGen) return true;
+					if (target == nullptr) return true;
 
 					return target->Get(lx, ny, lz) == 0;
 				};

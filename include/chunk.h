@@ -29,8 +29,8 @@ struct Chunk {
 	~Chunk();
 
 
-	int32_t cx;
-	int32_t cz;
+	int32_t cx = 0;
+	int32_t cz = 0;
 
 	void generate();
 	void buildMesh();

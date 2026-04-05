@@ -18,6 +18,9 @@ public:
 private:
 	World world;
 	Player plr;
+
+	double lastTime = 0;
+	int nbFrames = 0;
 };
 
 extern Game* gGame;

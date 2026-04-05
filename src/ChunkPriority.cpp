@@ -1,4 +1,5 @@
 #include "ChunkPriority.h"
+#include "chunk.h"
 #include "world.h"
 
 bool ChunkPriority::operator()(const std::shared_ptr<Chunk>& a, const std::shared_ptr<Chunk>& b) const {//when it returns true, B is greater than A

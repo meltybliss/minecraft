@@ -8,7 +8,7 @@ static int32_t FloorDiv(int v, int b) {
 	return static_cast<int32_t>(std::floor(static_cast<float>(v) / b));
 }
 
-World::World() : worldSeed(123456789u), meshQueue(ChunkPriority(0, 0)) {
+World::World() : worldSeed(123456789u), meshQueue(ChunkPriority{ 0, 0 }) {
 	gWorld = this;
 
 	for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
@@ -93,7 +93,7 @@ void World::Tick() {
 	int genBudget = 3;
 	while (genBudget-- > 0 && !generationQueue.empty()) {
 		std::weak_ptr<Chunk> wp = generationQueue.front();
-		generationQueue.pop_back();
+		generationQueue.pop_front();
 
 
 		if (auto c = wp.lock()) {
@@ -114,11 +114,18 @@ void World::Tick() {
 		std::shared_ptr<Chunk> c = meshQueue.top();
 		meshQueue.pop();
 
-		c->buildMesh();
+		if (!c) continue;
+
 		c->isQueuedForMesh = false;
+		if (!c->isDirty) continue;
+
+		c->buildMesh();
+		
 
 	}
 
+
+	ProcessGpuDeletes();
 }
 
 
@@ -165,7 +172,7 @@ void World::MarkChunkDirty(int32_t cx, int32_t cz) {
 	c->isDirty = true;
 
 	if (!c->isQueuedForMesh) {
-		meshQueue.push(std::shared_ptr<Chunk>(c));
+		meshQueue.push(c);
 		c->isQueuedForMesh = true;
 	}
 }
@@ -301,10 +308,13 @@ void World::RebuildMeshQueue(int32_t curCx, int32_t curCz) {
 	std::vector<std::shared_ptr<Chunk>> pedding;
 
 	while (!meshQueue.empty()) {
-		auto& c = meshQueue.top();
+		auto c = meshQueue.top();
 		meshQueue.pop();
 
 		if (!c) continue;
+
+		c->isQueuedForMesh = false;
+
 		if (!c->isDirty) continue;
 
 		pedding.push_back(c);
@@ -318,8 +328,25 @@ void World::RebuildMeshQueue(int32_t curCx, int32_t curCz) {
 
 	for (const auto& c : pedding) {
 		newQueue.push(c);
+		c->isQueuedForMesh = true;
 	}
 
 	meshQueue = std::move(newQueue);
 
  }
+
+
+void World::ProcessGpuDeletes() {
+	int deleteBudged = 8;
+
+	while (deleteBudged-- > 0 && !gpuDeleteQueue.empty()) {
+		auto job = gpuDeleteQueue.front();
+		gpuDeleteQueue.pop_front();
+
+		if (job.vao != 0) glDeleteVertexArrays(1, &job.vao);
+		if (job.vbo != 0) glDeleteBuffers(1, &job.vbo);
+
+	}
+
+
+}

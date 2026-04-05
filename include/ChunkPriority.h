@@ -1,7 +1,8 @@
 #pragma once
 #include <stdint.h>
-#include "world.h"
 #include <memory>
+
+struct Chunk;
 
 struct ChunkPriority {//comparator
 	int32_t plrCx;
