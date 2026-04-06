@@ -25,7 +25,7 @@ public:
 	World();
 
 	void Tick(float dt);
-	void render();
+	void render(GLuint program);
 
 	unsigned int GetBlockGlobal(int bx, int by, int bz);
 	Chunk* GetChunkPtr(int cx, int cz);

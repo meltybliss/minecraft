@@ -27,7 +27,8 @@ void Game::Tick(float deltaTime) {
 	}
 }
 
-void Game::Render() {
-	world.render();
+void Game::Render(GLuint program) {
+
+	world.render(program);
 
 }

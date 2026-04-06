@@ -109,14 +109,21 @@ void World::Tick(float dt) {
 }
 
 
-void World::render() {
+void World::render(GLuint program) {
 	
+	glUseProgram(program);
+	Mat4 identity = Mat4::Identity();
+	glUniformMatrix4fv(glGetUniformLocation(program, "uModel"), 1, GL_FALSE, identity.m);
+
+	glUniform1f(glGetUniformLocation(program, "uFlash"), 0.0f);
 	for (auto& item : Chunks) {
 		auto& c = item.second;
 		if (!c) continue;
-
-		
 		c->render();
+	}
+
+	for (auto& entity : entities) {
+		entity->Render(program);
 	}
 }
 

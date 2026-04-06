@@ -70,7 +70,7 @@ int main() {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.m);
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, proj.m);
 
-		game.Render();
+		game.Render(program);
 
 		glfwSwapBuffers(window);
 	}

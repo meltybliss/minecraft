@@ -10,7 +10,7 @@ public:
 	Game();
 
 	void Tick(float deltaTime);
-	void Render();
+	void Render(GLuint program);
 	
 	Player& GetPlayer() { return plr; }
 	const Player& GetPlayer() const { return plr; }
