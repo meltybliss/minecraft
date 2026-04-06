@@ -102,8 +102,11 @@ void World::Tick() {
 
 
 void World::render() {
+	
 	for (auto& item : Chunks) {
 		auto& c = item.second;
+		if (!c) continue;
+
 		
 		c->render();
 	}

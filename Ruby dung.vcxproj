@@ -136,6 +136,7 @@
     <ClCompile Include="src\camera.cpp" />
     <ClCompile Include="src\chunk.cpp" />
     <ClCompile Include="src\ChunkPriority.cpp" />
+    <ClCompile Include="src\Frustum.cpp" />
     <ClCompile Include="src\game.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\main.cpp" />
@@ -151,6 +152,7 @@
     <ClInclude Include="include\CaveSeed.h" />
     <ClInclude Include="include\chunk.h" />
     <ClInclude Include="include\ChunkPriority.h" />
+    <ClInclude Include="include\Frustum.h" />
     <ClInclude Include="include\game.h" />
     <ClInclude Include="include\glad\glad.h" />
     <ClInclude Include="include\GLFW\glfw3.h" />

@@ -17,6 +17,11 @@ struct Camera {
 	Vec3 right{ 1.0f, 0.0f, 0.0f };
 	Vec3 up{ 0.0f, 1.0f, 0.0f };
 
+	float fovDeg = 45.0f;
+	float aspect = 16.0f / 9.0f;
+	float nearZ = 0.1f;
+	float farZ = 1000.0f;
+
 	Vec3 lowerLeftCorner;
 	Vec3 horizontal;
 	Vec3 vertical;
@@ -34,11 +39,7 @@ struct Camera {
 
 	// 2. 投影行列 (Perspective) を取得
 	Mat4 GetProjectionMatrix() const {
-		float fov = 45.0f;           // 視野角
-		float aspect = 16.0f / 9.0f; // アスペクト比 (実働時はウィンドウサイズから計算が理想)
-		float nearZ = 0.1f;
-		float farZ = 1000.0f;
-		return Perspective(fov, aspect, nearZ, farZ);
+		return Perspective(fovDeg, aspect, nearZ, farZ);
 	}
 
 	// 3. UpdateVectors 内の計算を整理

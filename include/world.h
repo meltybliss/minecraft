@@ -14,7 +14,7 @@
 #include "ChunkPriority.h"
 #include <climits>
 #include "GpuDeleteJob.h"
-
+#include "Frustum.h"
 
 class World {
 public:
