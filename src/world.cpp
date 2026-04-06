@@ -55,6 +55,7 @@ void World::Tick() {
 			auto c = std::make_shared<Chunk>();
 			c->cx = x;
 			c->cz = z;
+			c->chunkSeed = Chunk::makeChunkSeed(gWorld->getWorldSeed(), c->cx, c->cz);
 
 			if (!c->isQueuedForGen) {
 				generationQueue.push_back(c);
@@ -329,6 +330,13 @@ void World::GatherUnloadCandidates(int32_t curCx, int32_t curCz) {
 
 }
 
+void World::ChunkGenerate(Chunk* c) {
+
+	terrainGen.Generate(c);
+	caveGen.ApplyCaves(c);
+	c->isDirty = true;
+}
+
 void World::ProcessGpuDeletes() {
 	int deleteBudged = 3;
 
@@ -353,7 +361,9 @@ void World::ProcessGenQueue() {
 
 
 		if (auto c = wp.lock()) {
-			c->generate();
+			
+			ChunkGenerate(c.get());
+
 			c->isGenerated = true;
 			c->isQueuedForGen = false;
 
@@ -381,7 +391,7 @@ void World::ProcessMeshQueue() {
 		c->isQueuedForMesh = false;
 		if (!c->isDirty) continue;
 
-		c->buildMesh();
+		meshBuilder.BuildMesh(c.get());
 
 
 	}

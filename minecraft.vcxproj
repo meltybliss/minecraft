@@ -134,14 +134,19 @@
   <ItemGroup>
     <ClCompile Include="src\block.cpp" />
     <ClCompile Include="src\camera.cpp" />
+    <ClCompile Include="src\CaveGenerator.cpp" />
     <ClCompile Include="src\chunk.cpp" />
+    <ClCompile Include="src\ChunkMeshBuilder.cpp" />
     <ClCompile Include="src\ChunkPriority.cpp" />
     <ClCompile Include="src\Frustum.cpp" />
     <ClCompile Include="src\game.cpp" />
+    <ClCompile Include="src\GetSurfaceHeight.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\MathUtils.cpp" />
     <ClCompile Include="src\noise.cpp" />
     <ClCompile Include="src\Player.cpp" />
     <ClCompile Include="src\ShaderInitUtils.cpp" />
+    <ClCompile Include="src\TerrainGenerator.cpp" />
     <ClCompile Include="src\texture.cpp" />
     <ClCompile Include="src\world.cpp" />
     <ClCompile Include="third_party\glad.c" />
@@ -149,17 +154,22 @@
   <ItemGroup>
     <ClInclude Include="include\block.h" />
     <ClInclude Include="include\camera.h" />
+    <ClInclude Include="include\CaveGenerator.h" />
     <ClInclude Include="include\CaveSeed.h" />
     <ClInclude Include="include\chunk.h" />
+    <ClInclude Include="include\ChunkMeshBuilder.h" />
     <ClInclude Include="include\ChunkPriority.h" />
     <ClInclude Include="include\Frustum.h" />
     <ClInclude Include="include\game.h" />
+    <ClInclude Include="include\GetSurfaceHeight.h" />
     <ClInclude Include="include\HitResult.h" />
     <ClInclude Include="include\Mat4.h" />
+    <ClInclude Include="include\MathUtils.h" />
     <ClInclude Include="include\noise.h" />
     <ClInclude Include="include\Player.h" />
     <ClInclude Include="include\ShaderInitUtils.h" />
     <ClInclude Include="include\stb_image.h" />
+    <ClInclude Include="include\TerrainGenerator.h" />
     <ClInclude Include="include\texture.h" />
     <ClInclude Include="include\Vec2.h" />
     <ClInclude Include="include\Vec3.h" />

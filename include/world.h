@@ -15,6 +15,10 @@
 #include <climits>
 #include "GpuDeleteJob.h"
 #include "Frustum.h"
+#include "ChunkMeshBuilder.h"
+#include "TerrainGenerator.h"
+#include "CaveGenerator.h"
+
 
 class World {
 public:
@@ -54,6 +58,10 @@ private:
 	int RENDER_DISTANCE = 30;
 	int UNLOAD_DISTANCE = 34;
 
+	ChunkMeshBuilder meshBuilder;
+	TerrainGenerator terrainGen;
+	CaveGenerator caveGen;
+
 	int32_t lastPlrChunkCx = INT_MAX;
 	int32_t lastPlrChunkCz = INT_MAX;
 
@@ -88,6 +96,8 @@ private:
 	
 	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
 	void GatherUnloadCandidates(int32_t curCx, int32_t curCz);
+
+	void ChunkGenerate(Chunk* c);
 
 	void ProcessGenQueue();
 	void ProcessMeshQueue();
