@@ -19,11 +19,11 @@
     <Filter Include="lib">
       <UniqueIdentifier>{8e503c16-ab2e-4690-b3ff-9b3d5f2d152a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="third_party">
+      <UniqueIdentifier>{9f6493c4-dd72-4240-a053-5abbb8625354}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\glad.c">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -60,20 +60,11 @@
     <ClCompile Include="src\Frustum.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="third_party\glad.c">
+      <Filter>third_party</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\GLFW\glfw3.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="include\GLFW\glfw3native.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="include\glad\glad.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="include\KHR\khrplatform.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="include\block.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -124,6 +115,18 @@
     </ClInclude>
     <ClInclude Include="include\Frustum.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\glad\glad.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\GLFW\glfw3.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\GLFW\glfw3native.h">
+      <Filter>third_party</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\KHR\khrplatform.h">
+      <Filter>third_party</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

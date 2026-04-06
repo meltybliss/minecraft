@@ -61,3 +61,6 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+third_party/** linguist-vendored
+vendor/** linguist-vendored
+external/** linguist-vendored
