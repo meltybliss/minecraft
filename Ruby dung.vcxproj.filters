@@ -130,14 +130,14 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\basic.frag">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\basic.vert">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="include\Ray.h">
       <Filter>ヘッダー ファイル</Filter>
+    </None>
+    <None Include="resources\shaders\basic.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="resources\shaders\basic.vert">
+      <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

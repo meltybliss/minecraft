@@ -26,12 +26,12 @@ int main() {
 
 	
 
-	unsigned int program = CreateShaderProgram("shaders/basic.vert", "shaders/basic.frag");
+	unsigned int program = CreateShaderProgram("resources/shaders/basic.vert", "resources/shaders/basic.frag");
 
 	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	GLuint blockTex = LoadTexture2D("textures/atlas2.png");
+	GLuint blockTex = LoadTexture2D("resources/textures/atlas.png");
 
 	glUseProgram(program);
 	int texLoc = glGetUniformLocation(program, "uTexture");
