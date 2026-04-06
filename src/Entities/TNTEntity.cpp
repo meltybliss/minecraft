@@ -1,7 +1,7 @@
 #include "Entities/TNTEntity.h"
 #include "ExplosionService.h"
 #include <cmath>
-
+#include "block.h"
 
 void TNTEntity::Tick(float dt) {
 	timer -= dt;
@@ -18,6 +18,7 @@ void TNTEntity::Tick(float dt) {
 
 void TNTEntity::Render() {
 
-
+	BlockRenderUtils::AppendBlockCube(verts, pos.x, pos.y, pos.z, 
+		(unsigned int)BlockType::TNT);
 
 }

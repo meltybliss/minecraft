@@ -1,5 +1,6 @@
 #pragma once
 #include "Entity.h"
+#include "BlockRenderUtils.h"
 
 class TNTEntity : public Entity {
 public:
@@ -13,5 +14,6 @@ public:
 private:
 
 	float timer = 0.0f;
+	std::vector<float> verts;
 
 };

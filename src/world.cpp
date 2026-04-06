@@ -346,20 +346,8 @@ void World::ChunkGenerate(Chunk* c) {
 
 
 void World::Ignite(int bx, int by, int bz) {
-	int cx = FloorDiv(bx, Chunk::CHUNK_WIDTH);
-	int cz = FloorDiv(bz, Chunk::CHUNK_WIDTH);
-
-	uint64_t key = GetChunkKey(cx, cz);
-	auto it = Chunks.find(key);
-	if (it == Chunks.end()) return;
-
-	auto& c = it->second;
-
-	int lx = bx - cx * Chunk::CHUNK_WIDTH;
-	int ly = by;
-	int lz = bz - cz * Chunk::CHUNK_WIDTH;
-
-	c->Set(lx, ly, lz, 0);
+	
+	this->SetBlockGlobal(bx, by, bz, 0);
 	entities.push_back(std::make_unique<TNTEntity>(Vec3{ (float)bx, (float)by, (float)bz }, 3.0f));
 }
 

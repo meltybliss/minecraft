@@ -12,17 +12,6 @@
 #include "CaveSeed.h"
 #include <unordered_map>
 
-struct UVRect {
-	float u0, v0, u1, v1;
-};
-
-
-enum class FaceType {
-	Top,
-	Bottom,
-	Side
-};
-
 
 struct Chunk {
 
@@ -89,15 +78,6 @@ struct Chunk {
 
 	
 	std::unordered_map<uint64_t, std::vector<CaveSeed>> cavesCashe;
-
-	static constexpr int STONE_BLOB_COUNT = 8;
-	static constexpr int ORE_SCATTER_PER_1000 = 20;
-	static constexpr int ORE_VEIN_STEPS = 30;
-	static constexpr int CAVE_STEPS = 50;
-	static constexpr int CAVE_RADIUS = 2;
-
-	static constexpr int ATLAS_COLS = 32;
-	static constexpr int ATLAS_ROWS = 16;
 
 	
 
