@@ -32,7 +32,7 @@ World::World() : worldSeed(123456789u), meshQueue(ChunkPriority{ 0, 0 }) {
 	}
 }
 
-void World::Tick() {
+void World::Tick(float dt) {
 
 	Vec3 pos = gGame->GetPlayer().getPos();
 	float chunkWorldSize = static_cast<float>(Chunk::CHUNK_WIDTH * blockSize);
@@ -94,6 +94,13 @@ void World::Tick() {
 		RebuildMeshQueue(curCx, curCz);
 		GatherUnloadCandidates(curCx, curCz);
 	}
+
+	for (auto& entity : entities) {
+
+		entity->Tick(dt);
+
+	}
+
 
 	ProcessGenQueue();
 	ProcessMeshQueue();
@@ -337,6 +344,27 @@ void World::ChunkGenerate(Chunk* c) {
 	c->isDirty = true;
 }
 
+
+void World::Ignite(int bx, int by, int bz) {
+	int cx = FloorDiv(bx, Chunk::CHUNK_WIDTH);
+	int cz = FloorDiv(bz, Chunk::CHUNK_WIDTH);
+
+	uint64_t key = GetChunkKey(cx, cz);
+	auto it = Chunks.find(key);
+	if (it == Chunks.end()) return;
+
+	auto& c = it->second;
+
+	int lx = bx - cx * Chunk::CHUNK_WIDTH;
+	int ly = by;
+	int lz = bz - cz * Chunk::CHUNK_WIDTH;
+
+	c->Set(lx, ly, lz, 0);
+	entities.push_back(std::make_unique<TNTEntity>(Vec3{ (float)bx, (float)by, (float)bz }, 3.0f));
+}
+
+
+#pragma region QueueProcesses
 void World::ProcessGpuDeletes() {
 	int deleteBudged = 3;
 
@@ -432,3 +460,5 @@ void World::ProcessUnloadQueue(int32_t curCx, int32_t curCz) {
 
 	}
 }
+
+#pragma endregion QueueProcesses

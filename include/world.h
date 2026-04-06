@@ -18,13 +18,13 @@
 #include "ChunkMeshBuilder.h"
 #include "TerrainGenerator.h"
 #include "CaveGenerator.h"
-
+#include "Entities/TNTEntity.h"
 
 class World {
 public:
 	World();
 
-	void Tick();
+	void Tick(float dt);
 	void render();
 
 	unsigned int GetBlockGlobal(int bx, int by, int bz);
@@ -32,6 +32,7 @@ public:
 
 	bool SetBlockByRay(Ray& ray, unsigned int block, float maxDist);
 	bool SetBlockGlobal(int bx, int by, int bz, unsigned int block);
+	void Ignite(int bx, int by, int bz);
 
 	HitResult TraceRay(Ray& ray, float maxDist);
 
@@ -85,11 +86,11 @@ private:
 	std::vector<Vec2> spiralOffsets;
 	std::unordered_map<uint64_t, int> spiralRank;//spiralOffset“à‚Å‚Ìindex‚ð“¾‚é‚½‚ß‚Ì‚à‚Ì
 
+	std::vector<std::unique_ptr<Entity>> entities;
 
 	uint64_t GetChunkKey(int32_t cx, int32_t cz) const {
 		return (static_cast<uint64_t>(static_cast<uint32_t>(cx)) << 32 | static_cast<uint32_t>(cz));
 	}
-
 
 
 	void MarkChunkDirty(int32_t cx, int32_t cz);

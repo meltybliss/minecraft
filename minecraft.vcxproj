@@ -138,6 +138,8 @@
     <ClCompile Include="src\chunk.cpp" />
     <ClCompile Include="src\ChunkMeshBuilder.cpp" />
     <ClCompile Include="src\ChunkPriority.cpp" />
+    <ClCompile Include="src\Entities\TNTEntity.cpp" />
+    <ClCompile Include="src\ExplosionService.cpp" />
     <ClCompile Include="src\Frustum.cpp" />
     <ClCompile Include="src\game.cpp" />
     <ClCompile Include="src\GetSurfaceHeight.cpp" />
@@ -159,6 +161,9 @@
     <ClInclude Include="include\chunk.h" />
     <ClInclude Include="include\ChunkMeshBuilder.h" />
     <ClInclude Include="include\ChunkPriority.h" />
+    <ClInclude Include="include\Entities\TNTEntity.h" />
+    <ClInclude Include="include\Entity.h" />
+    <ClInclude Include="include\ExplosionService.h" />
     <ClInclude Include="include\Frustum.h" />
     <ClInclude Include="include\game.h" />
     <ClInclude Include="include\GetSurfaceHeight.h" />

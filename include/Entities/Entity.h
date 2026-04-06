@@ -1,0 +1,20 @@
+#pragma once
+#include "Vec3.h"
+
+class Entity {
+public:
+
+	Entity(const Vec3& startPos) : pos(startPos) {}
+	virtual ~Entity() = default;
+	virtual void Tick(float dt) = 0;
+	virtual void Render() = 0;
+
+	bool IsDead() const { return isDead; }
+
+protected:
+
+	Vec3 pos;
+	Vec3 vel;
+	bool isDead = false;
+
+};

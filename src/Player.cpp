@@ -97,8 +97,12 @@ void Player::UpdateMouse() {
 
     static bool prevLeftDown = false;
     static bool prevRightDown = false;
+    static bool prevOneDown = false;//ik its weird but its for igniting tnt
+
     bool leftDown = glfwGetMouseButton(glfwGetCurrentContext(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     bool rightDown = glfwGetMouseButton(glfwGetCurrentContext(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+	bool oneDown = glfwGetKey(glfwGetCurrentContext(), GLFW_KEY_1) == GLFW_PRESS;
+
 
     if (leftDown && !prevLeftDown) {
         if (lastHit.isHit) {
@@ -123,9 +127,18 @@ void Player::UpdateMouse() {
         }
     }
 
+    if (oneDown && !prevOneDown) {
+        if (lastHit.isHit) {
+
+            gWorld->Ignite((int)lastHit.hitPos.x,
+                (int)lastHit.hitPos.y,
+                (int)lastHit.hitPos.z);
+        }
+    }
+
     prevLeftDown = leftDown;
     prevRightDown = rightDown;
-
+    prevOneDown = oneDown;
 }
 
 

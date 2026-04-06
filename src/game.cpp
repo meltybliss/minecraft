@@ -16,7 +16,7 @@ void Game::Tick(float deltaTime) {
 	double curTime = glfwGetTime();
 	nbFrames++;
 
-	world.Tick();
+	world.Tick(deltaTime);
 	plr.Tick(deltaTime);
 
 	if (curTime - lastTime >= 1.0) {

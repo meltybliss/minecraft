@@ -55,7 +55,7 @@ private:
 	bool debugFly = false;
 	bool grounded = false;
 
-	BlockType selectedBlock = BlockType::Dirt;
+	BlockType selectedBlock = BlockType::TNT;
 
 	HitResult lastHit;
 
