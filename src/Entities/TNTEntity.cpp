@@ -70,6 +70,6 @@ void TNTEntity::Render(GLuint program) {
 
 bool TNTEntity::shouldFlash() const {
 
-	int phase = static_cast<int>(timer * 10);
+	int phase = static_cast<int>(timer * 5);
 	return (phase % 2) == 0;
 }

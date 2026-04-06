@@ -101,6 +101,10 @@ void World::Tick(float dt) {
 
 	}
 
+	std::erase_if(entities, [](const std::unique_ptr<Entity>& e) {
+		return e->IsDead();
+	});
+
 
 	ProcessGenQueue();
 	ProcessMeshQueue();
