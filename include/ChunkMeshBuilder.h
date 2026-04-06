@@ -36,6 +36,7 @@ private:
 		const unsigned int ORE = static_cast<unsigned int>(BlockType::Ore);
 		const unsigned int WOOD = static_cast<unsigned int>(BlockType::Wood);
 		const unsigned int LEAVE = static_cast<unsigned int>(BlockType::Leave);
+		const unsigned int TNT = static_cast<unsigned int>(BlockType::TNT);
 
 
 		if (block == GRASS) {
@@ -67,6 +68,13 @@ private:
 
 		if (block == LEAVE) {
 			return AtlasUV(7, 5);
+		}
+
+		if (block == TNT) {
+			if (face == FaceType::Top) return AtlasUV(31, 1);
+			if (face == FaceType::Bottom) return AtlasUV(0, 2);
+
+			return AtlasUV(30, 1);
 		}
 
 		return AtlasUV(1, 0);

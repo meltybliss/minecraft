@@ -9,7 +9,7 @@ void TNTEntity::Tick(float dt) {
 	if (timer <= 0.0f) {
 
 		ExplosionService::Explode(static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)),
-			static_cast<int>(std::floor(pos.z)), 3);
+			static_cast<int>(std::floor(pos.z)), 5);
 
 		isDead = true;
 	}
