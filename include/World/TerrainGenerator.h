@@ -13,5 +13,7 @@ private:
 	static void GenerateTrees(Chunk* c, std::mt19937& rng);
 	static void GenerateSea(Chunk* c);
 
+	static bool IsNearSea(int wx, int wz);
+
 	static constexpr int kSeaLevel = 62;
 };

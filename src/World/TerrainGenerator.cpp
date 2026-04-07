@@ -21,16 +21,16 @@ void TerrainGenerator::FillTerrain(Chunk* c) {
 
 
 			int surfaceY = GetSurfaceHeight(wx, wz);
-			bool nearSea = (surfaceY <= kSeaLevel + 2);
+			bool beach = (surfaceY <= kSeaLevel + 2) || IsNearSea(wx, wz);
 
 			for (int y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
 				BlockType b = BlockType::AIR;
 
 				if (y == surfaceY) {
-					b = nearSea ? BlockType::Sand : BlockType::Grass;
+					b = beach ? BlockType::Sand : BlockType::Grass;
 				}
 				else if (y < surfaceY && y >= surfaceY - 4) {
-					b = nearSea ? BlockType::Sand : BlockType::Dirt;
+					b = beach ? BlockType::Sand : BlockType::Dirt;
 				}
 				else if (y < surfaceY - 4) {
 					b = BlockType::Stone;
@@ -117,4 +117,22 @@ void TerrainGenerator::GenerateTrees(Chunk* c, std::mt19937& rng) {
 			}
 		}
 	}
+}
+
+
+bool TerrainGenerator::IsNearSea(int wx, int wz) {
+	static const int dirs[8][2] = {
+		{ 1, 0}, {-1, 0}, {0, 1}, {0,-1},
+		{ 1, 1}, { 1,-1}, {-1, 1}, {-1,-1}
+	};
+
+	for (auto& d : dirs) {
+
+		int nh = GetSurfaceHeight(wx + d[0], wz + d[1]);
+		if (nh <= kSeaLevel) return true;
+
+	}
+
+	return false;
+
 }
