@@ -17,7 +17,7 @@ void ExplosionService::Explode(int bx, int by, int bz, int radius) {
 
 				if (gWorld->GetBlockGlobal(x, y, z) == (unsigned int)BlockType::TNT) {
 					
-					gWorld->Ignite(x, y, z, gWorld->RandomFuse());
+					gWorld->Ignite(x, y, z, gWorld->RandomFuse(), true, bx, by, bz);
 				}
 				else {
 					gWorld->SetBlockGlobal(x, y, z, 0);

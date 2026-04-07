@@ -32,7 +32,9 @@ public:
 
 	bool SetBlockByRay(Ray& ray, unsigned int block, float maxDist);
 	bool SetBlockGlobal(int bx, int by, int bz, unsigned int block);
-	void Ignite(int bx, int by, int bz, float timer);
+	void Ignite(int bx, int by, int bz, float timer,
+				bool hasExplosionSource = false,
+				int ex = 0, int ey = 0, int ez = 0);
 
 	HitResult TraceRay(Ray& ray, float maxDist);
 

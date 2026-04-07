@@ -356,16 +356,33 @@ void World::ChunkGenerate(Chunk* c) {
 }
 
 
-void World::Ignite(int bx, int by, int bz, float timer) {
+void World::Ignite(int bx, int by, int bz, float timer,
+					bool hasExplosionSource,
+					int ex, int ey, int ez) {
 	
 	this->SetBlockGlobal(bx, by, bz, 0);
 
 	auto TNT = std::make_unique<TNTEntity>(Vec3{ (float)bx, (float)by, (float)bz }, 
 		timer);
 
-	std::uniform_real_distribution<float> dirDist(-0.02f, 0.02f);
+	if (hasExplosionSource) {
 
-	TNT->setVel(Vec3{ dirDist(TNTRng), 6.f, dirDist(TNTRng) });
+		Vec3 dir = Normalize(Vec3{
+			(float)bx - ex,
+			(float)by - ey,
+			(float)bz - ez
+		});
+
+		Vec3 vel = dir * 3.0f;
+		vel.y += 6.0f;
+		TNT->setVel(vel);
+	}
+	else {
+		std::uniform_real_distribution<float> dirDist(-0.02f, 0.02f);
+
+		TNT->setVel(Vec3{ dirDist(TNTRng), 6.f, dirDist(TNTRng) });
+	}
+	
 
 	entities.push_back(std::move(TNT));
 }
