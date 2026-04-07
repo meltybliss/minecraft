@@ -106,7 +106,7 @@ void Player::UpdateMouse() {
 
     if (leftDown && !prevLeftDown) {
         if (lastHit.isHit) {
-            gWorld->SetBlockGlobal((int)lastHit.hitPos.x,
+            gWorld->SetBlockGlobalForPlr((int)lastHit.hitPos.x,
                 (int)lastHit.hitPos.y,
                 (int)lastHit.hitPos.z,
                 (unsigned int)BlockType::AIR);
@@ -122,7 +122,7 @@ void Player::UpdateMouse() {
 
             if (CanPlaceBlockAt(Vec3{(float)nx, (float)ny, (float)nz})) {
 
-                gWorld->SetBlockGlobal(nx, ny, nz, (unsigned int)selectedBlock);
+                gWorld->SetBlockGlobalForPlr(nx, ny, nz, (unsigned int)selectedBlock);
             }
         }
     }

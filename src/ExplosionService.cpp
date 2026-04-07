@@ -20,7 +20,7 @@ void ExplosionService::Explode(int bx, int by, int bz, int radius) {
 					gWorld->Ignite(x, y, z, gWorld->RandomFuse(), true, bx, by, bz);
 				}
 				else {
-					gWorld->SetBlockGlobal(x, y, z, 0);
+					gWorld->SetBlockGlobalForProgram(x, y, z, 0);
 				}
 				
 			}

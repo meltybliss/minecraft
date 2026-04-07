@@ -4,7 +4,9 @@
 #include <memory>
 #include <unordered_map>
 #include <stdint.h>
+#include <array>
 #include <cmath>
+#include <algorithm>
 #include "HitResult.h"
 #include "ShaderInitUtils.h"
 #include "Mat4.h"
@@ -19,6 +21,8 @@
 #include "TerrainGenerator.h"
 #include "CaveGenerator.h"
 #include "Entities/TNTEntity.h"
+#include "BlockPos.h"
+
 
 class World {
 public:
@@ -31,7 +35,10 @@ public:
 	Chunk* GetChunkPtr(int cx, int cz);
 
 	bool SetBlockByRay(Ray& ray, unsigned int block, float maxDist);
-	bool SetBlockGlobal(int bx, int by, int bz, unsigned int block);
+
+	bool SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block);
+	bool SetBlockGlobalForProgram(int bx, int by, int bz, unsigned int block);
+
 	void Ignite(int bx, int by, int bz, float timer,
 				bool hasExplosionSource = false,
 				int ex = 0, int ey = 0, int ez = 0);
@@ -52,6 +59,14 @@ public:
 
 	void EnqueueGpuDelete(GLuint vao, GLuint vbo) {
 		gpuDeleteQueue.push_back({ vao, vbo });
+	}
+
+	void EnqueueWaterProc(int bx, int by, int bz) {
+		for (const auto& p : waterProcQueue) {
+			if (bx == p.x && by == p.y && bz == p.z) return;
+		}
+
+		waterProcQueue.push_back(BlockPos{ bx, by, bz });
 	}
 
 	float RandomFuse() {
@@ -86,7 +101,7 @@ private:
 
 	std::deque<GpuDeleteJob> gpuDeleteQueue;
 	std::deque<uint64_t> unloadQueue;
-	
+	std::deque<BlockPos> waterProcQueue;
 
 
 	//std::deque<std::weak_ptr<Chunk>> meshQueue;
@@ -100,7 +115,7 @@ private:
 		return (static_cast<uint64_t>(static_cast<uint32_t>(cx)) << 32 | static_cast<uint32_t>(cz));
 	}
 
-
+	
 	void MarkChunkDirty(int32_t cx, int32_t cz);
 	
 	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
@@ -112,6 +127,7 @@ private:
 	void ProcessMeshQueue();
 	void ProcessGpuDeletes();
 	void ProcessUnloadQueue(int32_t curCx, int32_t curCz);
+	void ProcessWaterQueue();
 };
 
 extern World* gWorld;

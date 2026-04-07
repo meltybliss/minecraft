@@ -105,11 +105,18 @@ void World::Tick(float dt) {
 		return e->IsDead();
 	});
 
+	static int waterProcCount = 0;
+	waterProcCount++;
 
 	ProcessGenQueue();
 	ProcessMeshQueue();
 	ProcessUnloadQueue(curCx, curCz);
 	ProcessGpuDeletes();
+
+	if (waterProcCount >= 15) {
+		ProcessWaterQueue();
+		waterProcCount = 0;
+	}
 }
 
 
@@ -171,7 +178,7 @@ void World::MarkChunkDirty(int32_t cx, int32_t cz) {
 	}
 }
 
-bool World::SetBlockGlobal(int bx, int by, int bz, unsigned int block) {//playerが直接呼ぶ用
+bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//playerが直接呼ぶ用
 	int32_t cx = FloorDiv(bx, Chunk::CHUNK_WIDTH);
 	int32_t cz = FloorDiv(bz, Chunk::CHUNK_WIDTH);
 
@@ -187,7 +194,14 @@ bool World::SetBlockGlobal(int bx, int by, int bz, unsigned int block) {//player
 
 	if (block != 0) {
 		bool ok = c->isAirBlock(lx, ly, lz);
-		if (!ok) return false;
+
+		if (ok && block == (unsigned int)BlockType::Water) {
+			EnqueueWaterProc(bx, by, bz);
+		}
+		else {
+			return false;
+		}
+
 	}
 
 	bool ok = c->Set(lx, ly, lz, block);
@@ -205,12 +219,43 @@ bool World::SetBlockGlobal(int bx, int by, int bz, unsigned int block) {//player
 	return true;
 }
 
+bool World::SetBlockGlobalForProgram(int bx, int by, int bz, unsigned int block) {//playerが設置するときに使わない
+	int32_t cx = FloorDiv(bx, Chunk::CHUNK_WIDTH);
+	int32_t cz = FloorDiv(bz, Chunk::CHUNK_WIDTH);
+
+	uint64_t key = GetChunkKey(cx, cz);
+	auto it = Chunks.find(key);
+	if (it == Chunks.end()) return false;
+
+	Chunk* c = it->second.get();
+
+	int lx = bx - cx * Chunk::CHUNK_WIDTH;
+	int ly = by;
+	int lz = bz - cz * Chunk::CHUNK_WIDTH;
+
+
+	bool ok = c->Set(lx, ly, lz, block);
+	if (!ok) return false;
+
+
+	MarkChunkDirty(cx, cz);
+	c->isEdited = true;
+
+	if (lx == 0) MarkChunkDirty(cx - 1, cz);
+	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkDirty(cx + 1, cz);
+	if (lz == 0) MarkChunkDirty(cx, cz - 1);
+	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkDirty(cx, cz + 1);
+
+	return true;
+}
+
+
 
 bool World::SetBlockByRay(Ray& ray, unsigned int block, float maxDist) {
 	HitResult hit = TraceRay(ray, maxDist);
 	if (!hit.isHit) return false;
 
-	return this->SetBlockGlobal(hit.hitPos.x, hit.hitPos.y, hit.hitPos.z, block);
+	return this->SetBlockGlobalForPlr(hit.hitPos.x, hit.hitPos.y, hit.hitPos.z, block);
 	
 }
 
@@ -362,7 +407,7 @@ void World::Ignite(int bx, int by, int bz, float timer,
 
 	if (GetBlockGlobal(bx, by, bz) != (unsigned int)BlockType::TNT) return;
 	
-	this->SetBlockGlobal(bx, by, bz, 0);
+	this->SetBlockGlobalForPlr(bx, by, bz, 0);
 
 	auto TNT = std::make_unique<TNTEntity>(Vec3{ (float)bx, (float)by, (float)bz }, 
 		timer);
@@ -484,6 +529,58 @@ void World::ProcessUnloadQueue(int32_t curCx, int32_t curCz) {
 		}
 
 
+	}
+}
+
+
+void World::ProcessWaterQueue() {
+
+	int waterBudged = 500;
+
+	static const std::array<BlockPos, 4> sideDirs{{
+		{1, 0, 0},
+		{-1, 0, 0},
+		{0, 0, -1},
+		{0, 0, 1}
+	}};
+
+	static const BlockPos down = { 0, -1, 0 };
+
+	int count = std::min((int)waterProcQueue.size(), waterBudged);
+
+	while (count-- > 0 && !waterProcQueue.empty()) {
+
+		auto pos = waterProcQueue.front();
+		waterProcQueue.pop_front();
+
+		unsigned int b = GetBlockGlobal(pos.x, pos.y, pos.z);
+
+		if (b != (unsigned int)BlockType::Water) {
+			SetBlockGlobalForProgram(pos.x, pos.y, pos.z, (unsigned int)BlockType::Water);
+		}
+
+		BlockPos next;
+		if (GetBlockGlobal(pos.x, pos.y - 1, pos.z) == 0) {
+			next = pos + down;
+			SetBlockGlobalForProgram(next.x, next.y, next.z, (unsigned int)BlockType::Water);
+			waterProcQueue.push_back(next);
+		}
+		else {
+			auto dirs = sideDirs;
+			std::shuffle(dirs.begin(), dirs.end(), TNTRng);
+
+			for (const auto& d : dirs) {
+				next = pos + d;
+				if (GetBlockGlobal(next.x, next.y, next.z) == 0) {
+
+					SetBlockGlobalForProgram(next.x, next.y, next.z, (unsigned int)BlockType::Water);
+					waterProcQueue.push_back(next);
+
+				}
+			}
+		}
+
+		
 	}
 }
 

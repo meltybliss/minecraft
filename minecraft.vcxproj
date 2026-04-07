@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="include\AABB.h" />
     <ClInclude Include="include\block.h" />
+    <ClInclude Include="include\BlockPos.h" />
     <ClInclude Include="include\BlockRenderUtils.h" />
     <ClInclude Include="include\camera.h" />
     <ClInclude Include="include\CaveGenerator.h" />

@@ -44,8 +44,8 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 					else if (nz >= Chunk::CHUNK_WIDTH) { targetCz = 2; lz = 0; }
 
 					Chunk* target = neighbors[targetCx][targetCz];
-					if (target == nullptr) return (unsigned int)BlockType::AIR;
-					if (!target->isGenerated) return (unsigned int)BlockType::AIR;
+					if (target == nullptr) return (unsigned int)BlockType::Dirt;
+					if (!target->isGenerated) return (unsigned int)BlockType::Dirt;
 
 					return target->Get(lx, ny, lz);
 				};
