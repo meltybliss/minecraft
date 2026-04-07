@@ -21,7 +21,7 @@ void TerrainGenerator::FillTerrain(Chunk* c) {
 
 
 			int surfaceY = GetSurfaceHeight(wx, wz);
-			bool beach = (surfaceY <= kSeaLevel + 2) || IsNearSea(wx, wz);
+			bool beach = (surfaceY <= kSeaLevel + 2);
 
 			for (int y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
 				BlockType b = BlockType::AIR;

@@ -15,5 +15,5 @@ private:
 
 	static bool IsNearSea(int wx, int wz);
 
-	static constexpr int kSeaLevel = 62;
+	static constexpr int kSeaLevel = 66;
 };
