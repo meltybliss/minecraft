@@ -203,6 +203,9 @@ bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//
 		}
 
 	}
+	else {
+		WakeNearbyWater(bx, by, bz);
+	}
 
 	bool ok = c->Set(lx, ly, lz, block);
 	if (!ok) return false;
@@ -434,6 +437,20 @@ void World::Ignite(int bx, int by, int bz, float timer,
 	entities.push_back(std::move(TNT));
 }
 
+
+void World::WakeNearbyWater(int bx, int by, int bz) {
+	static const std::array<BlockPos, 6> dirs{ {
+		{0, 1, 0}, {0, -1, 0},
+		{1, 0, 0}, {-1, 0, 0},
+		{0, 0, 1}, {0, 0, -1}
+	}};
+
+	for (auto& dir : dirs) {
+		if (GetBlockGlobal(bx + dir.x, by + dir.y, bz + dir.z) == (unsigned int)BlockType::Water) {
+			EnqueueWaterProc(bx + dir.x, by + dir.y, bz + dir.z);
+		}
+	}
+}
 
 #pragma region QueueProcesses
 void World::ProcessGpuDeletes() {

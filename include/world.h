@@ -68,7 +68,7 @@ public:
 		}
 
 		
-		waterProcQueue.emplace_back(WaterData{{bx, by, bz}, std::make_shared<int>(20)});
+		waterProcQueue.emplace_back(WaterData{{bx, by, bz}, std::make_shared<int>(WaterDef::initialWaterLevel)});
 	}
 
 	float RandomFuse() {
@@ -117,7 +117,8 @@ private:
 		return (static_cast<uint64_t>(static_cast<uint32_t>(cx)) << 32 | static_cast<uint32_t>(cz));
 	}
 
-	
+	void WakeNearbyWater(int bx, int by, int bz);
+
 	void MarkChunkDirty(int32_t cx, int32_t cz);
 	
 	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
