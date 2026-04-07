@@ -3,7 +3,7 @@
 #include <cmath>
 #include "block.h"
 #include "Mat4.h"
-
+#include "world.h"
 
 TNTEntity::TNTEntity(const Vec3& startPos, float startTimer)
     : Entity(startPos), timer(startTimer) {
@@ -53,6 +53,15 @@ void TNTEntity::Tick(float dt) {
 		isDead = true;
 	}
 
+    vel.y += gravity * dt;
+
+    pos.y += vel.y * dt;
+    if (IntersectsSolidBlock()) {
+        pos.y -= vel.y * dt;
+
+        vel.y = 0;
+    }
+
 }
 
 void TNTEntity::Render(GLuint program) {
@@ -72,4 +81,42 @@ bool TNTEntity::shouldFlash() const {
 
 	int phase = static_cast<int>(timer * 5);
 	return (phase % 2) == 0;
+}
+
+AABB TNTEntity::GetAABBAt() const {
+
+    return {
+        Vec3{pos.x, pos.y, pos.z},
+        Vec3{pos.x + blockSize, pos.y + blockSize, pos.z + blockSize }
+
+    };
+}
+
+
+bool TNTEntity::IntersectsSolidBlock() {
+    AABB box = GetAABBAt();
+
+    int minX = std::floor(box.min.x);
+    int maxX = std::floor(box.max.x);
+    int minY = std::floor(box.min.y);
+    int maxY = std::floor(box.max.y);
+    int minZ = std::floor(box.min.z);
+    int maxZ = std::floor(box.max.z);
+
+
+
+    for (int x = minX; x <= maxX; x++) {
+        for (int y = minY; y <= maxY; y++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                if (gWorld->GetBlockGlobal(x, y, z) != 0) {
+                    return true;
+                }
+            }
+           
+        }
+
+    }
+
+
+    return false;
 }

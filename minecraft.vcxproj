@@ -155,6 +155,7 @@
     <ClCompile Include="third_party\glad.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\AABB.h" />
     <ClInclude Include="include\block.h" />
     <ClInclude Include="include\BlockRenderUtils.h" />
     <ClInclude Include="include\camera.h" />

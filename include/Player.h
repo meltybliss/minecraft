@@ -4,12 +4,7 @@
 #include "block.h"
 #include "HitResult.h"
 #include "Ray.h"
-
-struct AABB {
-	Vec3 min;
-	Vec3 max;
-};
-
+#include "AABB.h"
 class Player {
 public:
 	
