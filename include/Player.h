@@ -1,10 +1,10 @@
 #pragma once
-#include "camera.h"
-#include "Vec3.h"
-#include "block.h"
-#include "HitResult.h"
-#include "Ray.h"
-#include "AABB.h"
+#include "Rendering/camera.h"
+#include "Math/Vec3.h"
+#include "World/block.h"
+#include "Math/HitResult.h"
+#include "Math/Ray.h"
+#include "Math/AABB.h"
 class Player {
 public:
 	

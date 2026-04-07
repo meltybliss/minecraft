@@ -1,7 +1,7 @@
 #pragma once
 #include "Entity.h"
-#include "BlockRenderUtils.h"
-#include "AABB.h"
+#include "Rendering/BlockRenderUtils.h"
+#include "Math/AABB.h"
 
 class TNTEntity : public Entity {
 public:

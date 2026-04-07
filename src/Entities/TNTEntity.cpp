@@ -1,9 +1,9 @@
 #include "Entities/TNTEntity.h"
-#include "ExplosionService.h"
+#include "Systems/ExplosionService.h"
 #include <cmath>
-#include "block.h"
-#include "Mat4.h"
-#include "world.h"
+#include "World/block.h"
+#include "Math/Mat4.h"
+#include "World/world.h"
 
 TNTEntity::TNTEntity(const Vec3& startPos, float startTimer)
     : Entity(startPos), timer(startTimer) {
