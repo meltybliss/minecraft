@@ -22,7 +22,7 @@
 #include "CaveGenerator.h"
 #include "Entities/TNTEntity.h"
 #include "BlockPos.h"
-
+#include "WaterStruct.h"
 
 class World {
 public:
@@ -62,11 +62,13 @@ public:
 	}
 
 	void EnqueueWaterProc(int bx, int by, int bz) {
-		for (const auto& p : waterProcQueue) {
-			if (bx == p.x && by == p.y && bz == p.z) return;
+		
+		for (const auto& d : waterProcQueue) {
+			if (bx == d.pos.x && by == d.pos.y && bz == d.pos.z) return;
 		}
 
-		waterProcQueue.push_back(BlockPos{ bx, by, bz });
+		
+		waterProcQueue.emplace_back(WaterData{{bx, by, bz}, std::make_shared<int>(20)});
 	}
 
 	float RandomFuse() {
@@ -101,7 +103,7 @@ private:
 
 	std::deque<GpuDeleteJob> gpuDeleteQueue;
 	std::deque<uint64_t> unloadQueue;
-	std::deque<BlockPos> waterProcQueue;
+	std::deque<WaterData> waterProcQueue;
 
 
 	//std::deque<std::weak_ptr<Chunk>> meshQueue;

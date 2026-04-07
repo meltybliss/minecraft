@@ -113,7 +113,7 @@ void World::Tick(float dt) {
 	ProcessUnloadQueue(curCx, curCz);
 	ProcessGpuDeletes();
 
-	if (waterProcCount >= 15) {
+	if (waterProcCount >= 35) {
 		ProcessWaterQueue();
 		waterProcCount = 0;
 	}
@@ -550,8 +550,15 @@ void World::ProcessWaterQueue() {
 
 	while (count-- > 0 && !waterProcQueue.empty()) {
 
-		auto pos = waterProcQueue.front();
+		auto data = waterProcQueue.front();
+
+		auto pos = data.pos;
+
 		waterProcQueue.pop_front();
+
+		if (*data.level <= 0) continue;
+
+		(*data.level)--;
 
 		unsigned int b = GetBlockGlobal(pos.x, pos.y, pos.z);
 
@@ -562,8 +569,9 @@ void World::ProcessWaterQueue() {
 		BlockPos next;
 		if (GetBlockGlobal(pos.x, pos.y - 1, pos.z) == 0) {
 			next = pos + down;
+			data.pos = next;
 			SetBlockGlobalForProgram(next.x, next.y, next.z, (unsigned int)BlockType::Water);
-			waterProcQueue.push_back(next);
+			waterProcQueue.push_back(data);
 		}
 		else {
 			auto dirs = sideDirs;
@@ -572,9 +580,9 @@ void World::ProcessWaterQueue() {
 			for (const auto& d : dirs) {
 				next = pos + d;
 				if (GetBlockGlobal(next.x, next.y, next.z) == 0) {
-
+					data.pos = next;
 					SetBlockGlobalForProgram(next.x, next.y, next.z, (unsigned int)BlockType::Water);
-					waterProcQueue.push_back(next);
+					waterProcQueue.push_back(data);
 
 				}
 			}
