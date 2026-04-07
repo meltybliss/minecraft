@@ -130,11 +130,20 @@ void World::render(GLuint program) {
 	for (auto& item : Chunks) {
 		auto& c = item.second;
 		if (!c) continue;
-		c->render();
+
+		c->renderSolid(program);
 	}
 
 	for (auto& entity : entities) {
 		entity->Render(program);
+	}
+
+	for (auto& item : Chunks) {
+		auto& c = item.second;
+		if (!c) continue;
+
+		c->renderWater(program);
+
 	}
 }
 

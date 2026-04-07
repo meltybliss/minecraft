@@ -3,6 +3,7 @@
 
 void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 	c->vertices.clear();
+	c->waterVertices.clear();
 
 	float s = static_cast<float>(blockSize);
 
@@ -25,8 +26,8 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				float fy = static_cast<float>(y) * s;
 				float fz = static_cast<float>(z + c->cz * Chunk::CHUNK_WIDTH) * s;
 
-				//上が空気なら top face を追加
-
+				auto& outVerts = block == (unsigned int)BlockType::Water ?
+					c->waterVertices : c->vertices;
 
 				auto GetNeighborBlock = [&](int nx, int ny, int nz) -> unsigned int {
 					if (ny < 0 || ny >= Chunk::CHUNK_HEIGHT) {
@@ -86,7 +87,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 					
 					UVRect uv = GetBlockUV(block, FaceType::Top);
 
-					AddFaceUV(c->vertices,
+					AddFaceUV(outVerts,
 						fx, fy + s, fz,
 						fx + s, fy + s, fz,
 						fx + s, fy + s, fz + s,
@@ -99,7 +100,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				//bottom
 				if (ShouldDrawFace(self, bottom)) {
 					UVRect uv = GetBlockUV(block, FaceType::Bottom);
-					AddFaceUV(c->vertices,
+					AddFaceUV(outVerts,
 						fx, fy, fz,
 						fx, fy, fz + s,
 						fx + s, fy, fz + s,
@@ -111,7 +112,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				if (ShouldDrawFace(self, right)) {
 
 					UVRect uv = GetBlockUV(block, FaceType::Side);
-					AddFaceUVFlippedX(c->vertices,
+					AddFaceUVFlippedX(outVerts,
 						fx + s, fy, fz,
 						fx + s, fy, fz + s,
 						fx + s, fy + s, fz + s,
@@ -122,7 +123,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				// left
 				if (ShouldDrawFace(self, left)) {
 					UVRect uv = GetBlockUV(block, FaceType::Side);
-					AddFaceUV(c->vertices,
+					AddFaceUV(outVerts,
 						fx, fy, fz,
 						fx, fy, fz + s,
 						fx, fy + s, fz + s,
@@ -133,7 +134,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				// back
 				if (ShouldDrawFace(self, back)) {
 					UVRect uv = GetBlockUV(block, FaceType::Side);
-					AddFaceUVRotLeft90(c->vertices,
+					AddFaceUVRotLeft90(outVerts,
 						fx, fy, fz + s,
 						fx, fy + s, fz + s,
 						fx + s, fy + s, fz + s,
@@ -144,7 +145,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				// front
 				if (ShouldDrawFace(self, front)) {
 					UVRect uv = GetBlockUV(block, FaceType::Side);
-					AddFaceUV(c->vertices,
+					AddFaceUV(outVerts,
 						fx, fy, fz,
 						fx + s, fy, fz,
 						fx + s, fy + s, fz,
@@ -156,9 +157,10 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 	}
 
 
-	if (c->vertices.empty()) {
+	if (c->vertices.empty() && c->waterVertices.empty()) {
 		c->vertexCount = 0;
-		return; // データがないなら転送せずに終わる
+		c->waterVertexCount = 0;
+		return;
 	}
 
 	c->vertexCount = static_cast<int>(c->vertices.size() / 5);
@@ -178,6 +180,23 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 	// uv
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+
+	c->waterVertexCount = static_cast<int>(c->waterVertices.size() / 5);
+
+	if (c->waterVAO == 0) glGenVertexArrays(1, &c->waterVAO);
+	if (c->waterVBO == 0) glGenBuffers(1, &c->waterVBO);
+
+	glBindVertexArray(c->waterVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, c->waterVBO);
+	glBufferData(GL_ARRAY_BUFFER, c->waterVertices.size() * sizeof(float), c->waterVertices.data(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
 
 	glBindVertexArray(0);
 

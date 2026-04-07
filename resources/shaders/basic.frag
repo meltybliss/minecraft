@@ -5,9 +5,10 @@ out vec4 FragColor;
 
 uniform sampler2D uTexture;
 uniform float uFlash;
+uniform float uAlpha;
 
 void main() {
     vec4 tex = texture(uTexture, vUV);
     vec3 color = mix(tex.rgb, vec3(1.0), uFlash);
-    FragColor = vec4(color, tex.a);
+    FragColor = vec4(color, tex.a * uAlpha);
 }
