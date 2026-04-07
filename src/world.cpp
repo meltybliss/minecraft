@@ -359,6 +359,8 @@ void World::ChunkGenerate(Chunk* c) {
 void World::Ignite(int bx, int by, int bz, float timer,
 					bool hasExplosionSource,
 					int ex, int ey, int ez) {
+
+	if (GetBlockGlobal(bx, by, bz) != (unsigned int)BlockType::TNT) return;
 	
 	this->SetBlockGlobal(bx, by, bz, 0);
 
