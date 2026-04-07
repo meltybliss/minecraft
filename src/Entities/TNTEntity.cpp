@@ -52,6 +52,7 @@ void TNTEntity::Tick(float dt) {
 			static_cast<int>(std::floor(pos.z)), 5);
 
 		isDead = true;
+        return;
 	}
 
     
