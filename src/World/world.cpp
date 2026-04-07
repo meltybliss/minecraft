@@ -42,7 +42,7 @@ void World::Tick(float dt) {
 
 	bool movedToNewChunk = (curCx != lastPlrChunkCx) || (curCz != lastPlrChunkCz);
 
-
+	
 	for (const auto& off : spiralOffsets) {
 		int32_t x = curCx + off.x;
 		int32_t z = curCz + off.z;
