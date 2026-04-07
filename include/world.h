@@ -32,7 +32,7 @@ public:
 
 	bool SetBlockByRay(Ray& ray, unsigned int block, float maxDist);
 	bool SetBlockGlobal(int bx, int by, int bz, unsigned int block);
-	void Ignite(int bx, int by, int bz);
+	void Ignite(int bx, int by, int bz, float timer);
 
 	HitResult TraceRay(Ray& ray, float maxDist);
 
@@ -52,9 +52,15 @@ public:
 		gpuDeleteQueue.push_back({ vao, vbo });
 	}
 
+	float RandomFuse() {
+		std::uniform_real_distribution<float> dist(0.5, 1.5);
+		return dist(TNTRng);
+	}
+	
 private:
 
 	uint32_t worldSeed;
+	std::mt19937 TNTRng;
 
 	int RENDER_DISTANCE = 30;
 	int UNLOAD_DISTANCE = 34;

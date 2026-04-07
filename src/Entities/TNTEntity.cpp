@@ -45,6 +45,7 @@ TNTEntity::~TNTEntity() {
 void TNTEntity::Tick(float dt) {
 	timer -= dt;
 
+
 	if (timer <= 0.0f) {
 
 		ExplosionService::Explode(static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)),
@@ -53,7 +54,21 @@ void TNTEntity::Tick(float dt) {
 		isDead = true;
 	}
 
+    
     vel.y += gravity * dt;
+
+
+    pos.x += vel.x * dt;
+    if (IntersectsSolidBlock()) {
+        pos.x -= vel.x * dt;
+        vel.x = 0;
+    }
+
+    pos.z += vel.z * dt;
+    if (IntersectsSolidBlock()) {
+        pos.z -= vel.z * dt;
+        vel.z = 0;
+    }
 
     pos.y += vel.y * dt;
     if (IntersectsSolidBlock()) {
@@ -87,7 +102,7 @@ AABB TNTEntity::GetAABBAt() const {
 
     return {
         Vec3{pos.x, pos.y, pos.z},
-        Vec3{pos.x + blockSize, pos.y + blockSize, pos.z + blockSize }
+        Vec3{pos.x + blockSize, pos.y + blockSize, pos.z + blockSize}
 
     };
 }
@@ -96,14 +111,14 @@ AABB TNTEntity::GetAABBAt() const {
 bool TNTEntity::IntersectsSolidBlock() {
     AABB box = GetAABBAt();
 
-    int minX = std::floor(box.min.x);
-    int maxX = std::floor(box.max.x);
-    int minY = std::floor(box.min.y);
-    int maxY = std::floor(box.max.y);
-    int minZ = std::floor(box.min.z);
-    int maxZ = std::floor(box.max.z);
+    constexpr float eps = 0.001f;
 
-
+    int minX = static_cast<int>(std::floor(box.min.x));
+    int maxX = static_cast<int>(std::floor(box.max.x - eps));
+    int minY = static_cast<int>(std::floor(box.min.y));
+    int maxY = static_cast<int>(std::floor(box.max.y - eps));
+    int minZ = static_cast<int>(std::floor(box.min.z));
+    int maxZ = static_cast<int>(std::floor(box.max.z - eps));
 
     for (int x = minX; x <= maxX; x++) {
         for (int y = minY; y <= maxY; y++) {

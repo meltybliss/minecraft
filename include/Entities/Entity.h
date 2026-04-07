@@ -13,6 +13,9 @@ public:
 
 	bool IsDead() const { return isDead; }
 
+	void setVel(Vec3 vel) { this->vel = vel; }
+	
+
 protected:
 
 	Vec3 pos;

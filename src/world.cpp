@@ -8,7 +8,7 @@ static int32_t FloorDiv(int v, int b) {
 	return static_cast<int32_t>(std::floor(static_cast<float>(v) / b));
 }
 
-World::World() : worldSeed(123456789u), meshQueue(ChunkPriority{ 0, 0 }) {
+World::World() : worldSeed(123456789u), meshQueue(ChunkPriority{ 0, 0 }), TNTRng(std::random_device{}()) {
 	gWorld = this;
 
 	for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
@@ -356,10 +356,18 @@ void World::ChunkGenerate(Chunk* c) {
 }
 
 
-void World::Ignite(int bx, int by, int bz) {
+void World::Ignite(int bx, int by, int bz, float timer) {
 	
 	this->SetBlockGlobal(bx, by, bz, 0);
-	entities.push_back(std::make_unique<TNTEntity>(Vec3{ (float)bx, (float)by, (float)bz }, 3.0f));
+
+	auto TNT = std::make_unique<TNTEntity>(Vec3{ (float)bx, (float)by, (float)bz }, 
+		timer);
+
+	std::uniform_real_distribution<float> dirDist(-0.02f, 0.02f);
+
+	TNT->setVel(Vec3{ dirDist(TNTRng), 6.f, dirDist(TNTRng) });
+
+	entities.push_back(std::move(TNT));
 }
 
 

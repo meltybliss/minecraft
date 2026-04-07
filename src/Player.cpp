@@ -132,7 +132,7 @@ void Player::UpdateMouse() {
 
             gWorld->Ignite((int)lastHit.hitPos.x,
                 (int)lastHit.hitPos.y,
-                (int)lastHit.hitPos.z);
+                (int)lastHit.hitPos.z, 3.0f);
         }
     }
 
