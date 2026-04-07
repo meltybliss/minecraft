@@ -9,6 +9,7 @@ enum class BlockType {
 	Wood,
 	Leave,
 	TNT,
+	Water,
 };
 
 extern int blockSize;

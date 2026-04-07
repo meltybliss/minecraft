@@ -11,4 +11,6 @@ private:
 
 	static void FillTerrain(Chunk* c);
 	static void GenerateTrees(Chunk* c, std::mt19937& rng);
+
+	static constexpr int seaLevel = 62;
 };

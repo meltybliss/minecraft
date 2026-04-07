@@ -50,7 +50,7 @@ private:
 	bool debugFly = false;
 	bool grounded = false;
 
-	BlockType selectedBlock = BlockType::TNT;
+	BlockType selectedBlock = BlockType::Water;
 
 	HitResult lastHit;
 

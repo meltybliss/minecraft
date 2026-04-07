@@ -161,7 +161,9 @@ bool Player::IntersectsSolidBlock(const AABB& box) {
     for (int y = minY; y <= maxY; y++) {
         for (int z = minZ; z <= maxZ; z++) {
             for (int x = minX; x <= maxX; x++) {
-                if (gWorld->GetBlockGlobal(x, y, z) != 0) {
+
+                auto block = gWorld->GetBlockGlobal(x, y, z);
+                if (block != 0 && block != (unsigned int)BlockType::Water) {
                     return true;
                 }
             }

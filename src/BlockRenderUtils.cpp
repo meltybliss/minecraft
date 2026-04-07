@@ -28,6 +28,7 @@ UVRect BlockRenderUtils::GetBlockUV(unsigned int block, FaceType face) {
 	const unsigned int WOOD = static_cast<unsigned int>(BlockType::Wood);
 	const unsigned int LEAVE = static_cast<unsigned int>(BlockType::Leave);
 	const unsigned int TNT = static_cast<unsigned int>(BlockType::TNT);
+	const unsigned int WATER = static_cast<unsigned int>(BlockType::Water);
 
 
 	if (block == GRASS) {
@@ -68,7 +69,11 @@ UVRect BlockRenderUtils::GetBlockUV(unsigned int block, FaceType face) {
 		return AtlasUV(30, 1);
 	}
 
-	return AtlasUV(1, 0);
+	if (block == WATER) {
+		return AtlasUV(0, 13);
+	}
+
+	return AtlasUV(0, 0);
 }
 
 

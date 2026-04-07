@@ -27,8 +27,11 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 
 				//ã‚ª‹ó‹C‚È‚ç top face ‚ð’Ç‰Á
 
-				auto InAir = [&](int nx, int ny, int nz) -> bool {
-					if (ny < 0 || ny >= Chunk::CHUNK_HEIGHT) return true;
+
+				auto GetNeighborBlock = [&](int nx, int ny, int nz) -> unsigned int {
+					if (ny < 0 || ny >= Chunk::CHUNK_HEIGHT) {
+						return (unsigned int)BlockType::AIR;
+					}
 
 					int targetCx = 1;
 					int targetCz = 1;
@@ -41,14 +44,46 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 					else if (nz >= Chunk::CHUNK_WIDTH) { targetCz = 2; lz = 0; }
 
 					Chunk* target = neighbors[targetCx][targetCz];
-					if (target == nullptr) return false;
-					if (!target->isGenerated) return false;
+					if (target == nullptr) return (unsigned int)BlockType::AIR;
+					if (!target->isGenerated) return (unsigned int)BlockType::AIR;
 
-					return target->Get(lx, ny, lz) == 0;
-					};
+					return target->Get(lx, ny, lz);
+				};
+
+				auto IsWater = [&](unsigned int b) -> bool {
+					return b == (unsigned int)BlockType::Water;
+				};
+
+				auto IsAir = [&](unsigned int b) -> bool {
+					return b == (unsigned int)BlockType::AIR;
+				};
+
+
+				auto ShouldDrawFace = [&](unsigned int self, unsigned int neighbor) -> bool {
+					
+					bool selfLiq = IsWater(self);
+					bool neighborAir = IsAir(neighbor);
+					bool neighborLiq = IsWater(neighbor);
+
+					if (!selfLiq) {
+						return neighborAir || neighborLiq;
+					}
+
+					return neighborAir;
+				};
+
+
+				auto self = block;
+				auto top = GetNeighborBlock(x, y + 1, z);
+				auto bottom = GetNeighborBlock(x, y - 1, z);
+				auto right = GetNeighborBlock(x + 1, y, z);
+				auto left = GetNeighborBlock(x - 1, y, z);
+				auto back = GetNeighborBlock(x, y, z + 1);
+				auto front = GetNeighborBlock(x, y, z - 1);
 
 				//top
-				if (InAir(x, y + 1, z)) {
+				if (ShouldDrawFace(self, top)) {
+					
 					UVRect uv = GetBlockUV(block, FaceType::Top);
 
 					AddFaceUV(c->vertices,
@@ -62,7 +97,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				}
 
 				//bottom
-				if (InAir(x, y - 1, z)) {
+				if (ShouldDrawFace(self, bottom)) {
 					UVRect uv = GetBlockUV(block, FaceType::Bottom);
 					AddFaceUV(c->vertices,
 						fx, fy, fz,
@@ -73,7 +108,8 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				}
 
 				// right
-				if (InAir(x + 1, y, z)) {
+				if (ShouldDrawFace(self, right)) {
+
 					UVRect uv = GetBlockUV(block, FaceType::Side);
 					AddFaceUVFlippedX(c->vertices,
 						fx + s, fy, fz,
@@ -84,7 +120,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				}
 
 				// left
-				if (InAir(x - 1, y, z)) {
+				if (ShouldDrawFace(self, left)) {
 					UVRect uv = GetBlockUV(block, FaceType::Side);
 					AddFaceUV(c->vertices,
 						fx, fy, fz,
@@ -95,7 +131,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				}
 
 				// back
-				if (InAir(x, y, z + 1)) {
+				if (ShouldDrawFace(self, back)) {
 					UVRect uv = GetBlockUV(block, FaceType::Side);
 					AddFaceUVRotLeft90(c->vertices,
 						fx, fy, fz + s,
@@ -106,7 +142,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				}
 
 				// front
-				if (InAir(x, y, z - 1)) {
+				if (ShouldDrawFace(self, front)) {
 					UVRect uv = GetBlockUV(block, FaceType::Side);
 					AddFaceUV(c->vertices,
 						fx, fy, fz,
