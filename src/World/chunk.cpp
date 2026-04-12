@@ -75,6 +75,10 @@ void Chunk::RebuildSkyLight() {
 	std::queue<LightNode> q;
 
 	auto IsTransparent = [&](const unsigned int b) -> bool {
+		return b == 0 || b == (unsigned int)BlockType::Leave || b == (unsigned int)BlockType::Water;
+	};
+
+	auto IsAir = [&](const unsigned int b) -> bool {
 		return b == 0;
 	};
 
@@ -92,7 +96,7 @@ void Chunk::RebuildSkyLight() {
 
 				unsigned int block = Get(x, y, z);
 				
-				if (IsTransparent(block)) {
+				if (IsAir(block)) {
 					int index = Index(x, y, z);
 					blocks[index].skyLight = 15;
 					q.push({ x, y, z });
@@ -148,7 +152,14 @@ void Chunk::RebuildSkyLight() {
 			}
 			else {
 				if (curLight <= 1) continue;
-				newLight = curLight - 1;
+
+				if (IsAir(nBlock)) {
+
+					newLight = curLight - 1;
+				}
+				else {
+					newLight = curLight - 2;
+				}
 			}
 
 			if (newLight > blocks[nIdx].skyLight) {
@@ -162,5 +173,5 @@ void Chunk::RebuildSkyLight() {
 	}
 
 
-	isLightDirty = true;
+	isLightDirty = false;
 }

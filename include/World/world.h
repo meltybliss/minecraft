@@ -95,7 +95,8 @@ private:
 
 	std::deque<std::weak_ptr<Chunk>> generationQueue;
 	
-	std::deque<uint64_t> lightRebuildQueue;
+	std::deque<uint64_t> urgentLightQueue;
+	std::deque<uint64_t> normalLightQueue;
 
 	std::priority_queue<
 		std::shared_ptr<Chunk>,
@@ -114,6 +115,7 @@ private:
 	std::unordered_map<uint64_t, int> spiralRank;//spiralOffset“à‚Å‚Ìindex‚ð“¾‚é‚½‚ß‚Ì‚à‚Ì
 
 	std::vector<std::unique_ptr<Entity>> entities;
+	std::vector<std::unique_ptr<Entity>> pendingEntities;
 
 	uint64_t GetChunkKey(int32_t cx, int32_t cz) const {
 		return (static_cast<uint64_t>(static_cast<uint32_t>(cx)) << 32 | static_cast<uint32_t>(cz));
@@ -123,7 +125,7 @@ private:
 
 	
 	void MarkChunkMeshDirty(int32_t cx, int32_t cz);
-	void MarkChunkLightDirty(int32_t cx, int32_t cz);
+	void MarkChunkLightDirty(int32_t cx, int32_t cz, bool urgent);
 	
 	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
 	void GatherUnloadCandidates(int32_t curCx, int32_t curCz);

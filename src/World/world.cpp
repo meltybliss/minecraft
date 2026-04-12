@@ -85,6 +85,12 @@ void World::Tick(float dt) {
 
 	}
 
+	for (auto& p : pendingEntities) {
+		entities.push_back(std::move(p));
+	}
+
+	pendingEntities.clear();
+
 	std::erase_if(entities, [](const std::unique_ptr<Entity>& e) {
 		return e->IsDead();
 	});
@@ -122,6 +128,9 @@ void World::render(GLuint program) {
 	for (auto& entity : entities) {
 		entity->Render(program);
 	}
+
+	glUniformMatrix4fv(glGetUniformLocation(program, "uModel"), 1, GL_FALSE, identity.m);
+	glUniform1f(glGetUniformLocation(program, "uFlash"), 0.0f);
 
 	for (auto& item : Chunks) {
 		auto& c = item.second;
@@ -167,12 +176,13 @@ void World::MarkChunkMeshDirty(int32_t cx, int32_t cz) {
 	c->isMeshDirty = true;
 
 	if (!c->isQueuedForMesh) {
+	
 		meshQueue.push(c);
 		c->isQueuedForMesh = true;
 	}
 }
 
-void World::MarkChunkLightDirty(int32_t cx, int32_t cz) {
+void World::MarkChunkLightDirty(int32_t cx, int32_t cz, bool urgent) {
 	uint64_t key = GetChunkKey(cx, cz);
 
 	auto it = Chunks.find(key);
@@ -182,7 +192,13 @@ void World::MarkChunkLightDirty(int32_t cx, int32_t cz) {
 	c->isLightDirty = true;
 
 	if (!c->isQueuedForLight) {
-		lightRebuildQueue.push_back(key);
+		if (urgent) {
+			urgentLightQueue.push_back(key);
+		}
+		else {
+			normalLightQueue.push_back(key);
+		}
+		
 		c->isQueuedForLight = true;
 	}
 
@@ -223,14 +239,14 @@ bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//
 	if (!ok) return false;
 
 	
-	MarkChunkLightDirty(cx, cz);
+	MarkChunkLightDirty(cx, cz, true);
 	(cx, cz);
 	c->isEdited = true;
 
-	if (lx == 0) MarkChunkLightDirty(cx - 1, cz);
-	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx + 1, cz);
-	if (lz == 0) MarkChunkLightDirty(cx, cz - 1);
-	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx, cz + 1);
+	if (lx == 0) MarkChunkMeshDirty(cx - 1, cz);
+	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkMeshDirty(cx + 1, cz);
+	if (lz == 0) MarkChunkMeshDirty(cx, cz - 1);
+	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkMeshDirty(cx, cz + 1);
 
 	return true;
 }
@@ -251,16 +267,21 @@ bool World::SetBlockGlobalForProgram(int bx, int by, int bz, unsigned int block)
 
 
 	bool ok = c->Set(lx, ly, lz, block);
-	if (!ok) return false;
+	if (ok && block == (unsigned int)BlockType::Water) {
+		EnqueueWaterProc(bx, by, bz);
+	}
+	else if (!ok) {
+		return false;
+	}
 
 
-	MarkChunkLightDirty(cx, cz);
+	MarkChunkLightDirty(cx, cz, true);
 	c->isEdited = true;
 
-	if (lx == 0) MarkChunkLightDirty(cx - 1, cz);
-	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx + 1, cz);
-	if (lz == 0) MarkChunkLightDirty(cx, cz - 1);
-	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx, cz + 1);
+	if (lx == 0) MarkChunkMeshDirty(cx - 1, cz);
+	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkMeshDirty(cx + 1, cz);
+	if (lz == 0) MarkChunkMeshDirty(cx, cz - 1);
+	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkMeshDirty(cx, cz + 1);
 
 	return true;
 }
@@ -413,7 +434,7 @@ void World::ChunkGenerate(Chunk* c) {
 
 	terrainGen.Generate(c);
 	caveGen.ApplyCaves(c);
-	MarkChunkLightDirty(c->cx, c->cz);
+	MarkChunkLightDirty(c->cx, c->cz, false);
 }
 
 
@@ -447,7 +468,7 @@ void World::Ignite(int bx, int by, int bz, float timer,
 	}
 	
 
-	entities.push_back(std::move(TNT));
+	pendingEntities.push_back(std::move(TNT));
 }
 
 
@@ -496,11 +517,8 @@ void World::ProcessGenQueue() {
 			c->isGenerated = true;
 			c->isQueuedForGen = false;
 
-			MarkChunkLightDirty(c->cx, c->cz);
-			MarkChunkLightDirty(c->cx + 1, c->cz);
-			MarkChunkLightDirty(c->cx - 1, c->cz);
-			MarkChunkLightDirty(c->cx, c->cz + 1);
-			MarkChunkLightDirty(c->cx, c->cz - 1);
+			MarkChunkLightDirty(c->cx, c->cz, false);
+			
 		}
 	}
 
@@ -509,9 +527,40 @@ void World::ProcessGenQueue() {
 
 void World::ProcessLightQueue() {
 	int lightBudged = 3;
-	while (lightBudged-- > 0 && !lightRebuildQueue.empty()) {
-		uint64_t key = lightRebuildQueue.front();
-		lightRebuildQueue.pop_front();
+
+	while (lightBudged > 0 && !urgentLightQueue.empty()) {
+
+		lightBudged--;
+
+		uint64_t key = urgentLightQueue.front();
+		urgentLightQueue.pop_front();
+
+		auto it = Chunks.find(key);
+		if (it == Chunks.end() || !it->second) continue;
+
+		std::shared_ptr<Chunk> c = it->second;
+
+		if (!c) continue;
+
+		c->isQueuedForLight = false;
+		if (!c->isLightDirty) continue;
+
+		c->RebuildSkyLight();
+
+		MarkChunkMeshDirty(c->cx, c->cz);
+		MarkChunkMeshDirty(c->cx + 1, c->cz);
+		MarkChunkMeshDirty(c->cx - 1, c->cz);
+		MarkChunkMeshDirty(c->cx, c->cz + 1);
+		MarkChunkMeshDirty(c->cx, c->cz - 1);
+
+	}
+
+	while (lightBudged > 0 && !normalLightQueue.empty()) {
+
+		lightBudged--;
+
+		uint64_t key = normalLightQueue.front();
+		normalLightQueue.pop_front();
 
 		auto it = Chunks.find(key);
 		if (it == Chunks.end() || !it->second) continue;
@@ -547,6 +596,7 @@ void World::ProcessMeshQueue() {
 
 		c->isQueuedForMesh = false;
 		if (!c->isMeshDirty) continue;
+		if (c->isLightDirty) { meshQueue.push(c); continue; };
 
 		meshBuilder.BuildMesh(c.get());
 
