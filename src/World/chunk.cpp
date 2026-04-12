@@ -66,33 +66,97 @@ void Chunk::RebuildSkyLight() {
 		b.skyLight = 0;
 	}
 
+	struct LightNode {
+		int x, y, z;
+	};
+
+	std::queue<LightNode> q;
+
+	auto IsTransparent = [&](const unsigned int b) -> bool {
+		return b == 0;
+	};
+
+	auto InBounds = [&](int x, int y, int z) -> bool {
+		return { x >= 0 && x < CHUNK_WIDTH &&
+				y >= 0 && y < CHUNK_HEIGHT &&
+				z >= 0 && z < CHUNK_WIDTH };
+
+	};
+
 	for (int x = 0; x < CHUNK_WIDTH; x++) {
 		for (int z = 0; z < CHUNK_WIDTH; z++) {
 
-			bool blocked = false;
-
 			for (int y = CHUNK_HEIGHT - 1; y >= 0; y--) {
 
-				int index = Index(x, y, z);
-				if (!blocked) {
-					
+				unsigned int block = Get(x, y, z);
+				
+				if (IsTransparent(block)) {
+					int index = Index(x, y, z);
 					blocks[index].skyLight = 15;
-					if (Get(x, y, z) != 0) {
-
-						blocked = true;
-					}
+					q.push({ x, y, z });
 				}
 				else {
 
-					blocks[index].skyLight = 0;
-					
-
+					break;
 				}
 
 			}
 
 
 		}
+	}
+
+
+	while (!q.empty()) {
+		LightNode cur = q.front();
+		q.pop();
+
+		int curIdx = Index(cur.x, cur.y, cur.z);
+		uint8_t curLight = blocks[curIdx].skyLight;
+
+		if (curLight == 0) continue;
+
+		//right, left, front, back, down
+		const int dirs[5][3] = {
+			{1, 0, 0},
+			{-1, 0, 0},
+			{0, 0, 1},
+			{0, 0, -1},
+			{0, -1, 0},
+
+		};
+
+		for (const auto& dir : dirs) {
+			int nx = cur.x + dir[0];
+			int ny = cur.y + dir[1];
+			int nz = cur.z + dir[2];
+
+			if (!InBounds(nx, ny, nz)) continue;
+
+			int nIdx = Index(nx, ny, nz);
+			unsigned int nBlock = blocks[nIdx].type;
+
+			if (!IsTransparent(nBlock)) continue;
+
+			uint8_t newLight = 0;
+
+			if (dir[0] == 0 && dir[1] == -1 && dir[2] == 0 && curLight == 15) {
+
+				newLight = curLight;
+			}
+			else {
+				if (curLight <= 1) continue;
+				newLight = curLight - 1;
+			}
+
+			if (newLight > blocks[nIdx].skyLight) {
+				blocks[nIdx].skyLight = newLight;
+				q.push({ nx, ny, nz });
+			}
+
+		}
+
+
 	}
 
 }

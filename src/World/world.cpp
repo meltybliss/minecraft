@@ -207,7 +207,7 @@ bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//
 		if (ok && block == (unsigned int)BlockType::Water) {
 			EnqueueWaterProc(bx, by, bz);
 		}
-		else {
+		else if (!ok) {
 			return false;
 		}
 

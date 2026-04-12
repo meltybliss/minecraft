@@ -67,7 +67,7 @@ struct Chunk {
 			z >= 0 && z < CHUNK_WIDTH;
 	}
 
-	int Index(int x, int y, int z) const {
+	static int Index(int x, int y, int z) {
 		return x + z * CHUNK_WIDTH + y * CHUNK_WIDTH * CHUNK_WIDTH;
 	}
 
