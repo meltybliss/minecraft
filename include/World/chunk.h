@@ -36,7 +36,12 @@ struct Chunk {
 	bool isGenerated = false;
 	bool isEdited = false;
 	bool isDirty = false;
+
+	bool isLightDirty = false;
+	bool isMeshDirty = false;
+
 	bool isQueuedForGen = false;
+	bool isQueuedForLight = false;
 	bool isQueuedForMesh = false;
 	bool isQueuedForUnload = false;
 

@@ -68,22 +68,6 @@ void World::Tick(float dt) {
 		
 	}
 
-	/**std::erase_if(Chunks, [&](const auto& item) {
-		const auto& c = item.second;
-		if (c == nullptr) return false;
-
-		int32_t dx = std::abs(c->cx - curCx);
-		int32_t dz = std::abs(c->cz - curCz);
-
-		if (dx >= UNLOAD_DISTANCE || dz >= UNLOAD_DISTANCE) {
-			c->isQueuedForGen = false;
-			c->isQueuedForMesh = false;
-			return true;
-		}
-
-		return false;
-	});*/
-
 	
 
 
@@ -109,6 +93,7 @@ void World::Tick(float dt) {
 	waterProcCount++;
 
 	ProcessGenQueue();
+	ProcessLightQueue();
 	ProcessMeshQueue();
 	ProcessUnloadQueue(curCx, curCz);
 	ProcessGpuDeletes();
@@ -172,20 +157,38 @@ Chunk* World::GetChunkPtr(int cx, int cz) {
 }
 
 
-void World::MarkChunkDirty(int32_t cx, int32_t cz) {
+void World::MarkChunkMeshDirty(int32_t cx, int32_t cz) {
 	uint64_t key = GetChunkKey(cx, cz);
 
 	auto it = Chunks.find(key);
 	if (it == Chunks.end() || !it->second) return;
 	
 	std::shared_ptr<Chunk> c = it->second;
-	c->isDirty = true;
+	c->isMeshDirty = true;
 
 	if (!c->isQueuedForMesh) {
 		meshQueue.push(c);
 		c->isQueuedForMesh = true;
 	}
 }
+
+void World::MarkChunkLightDirty(int32_t cx, int32_t cz) {
+	uint64_t key = GetChunkKey(cx, cz);
+
+	auto it = Chunks.find(key);
+	if (it == Chunks.end() || !it->second) return;
+
+	std::shared_ptr<Chunk> c = it->second;
+	c->isLightDirty = true;
+
+	if (!c->isQueuedForLight) {
+		lightRebuildQueue.push_back(key);
+		c->isQueuedForLight = true;
+	}
+
+
+}
+
 
 bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//player‚ª’¼ÚŒÄ‚Ô—p
 	int32_t cx = FloorDiv(bx, Chunk::CHUNK_WIDTH);
@@ -220,13 +223,14 @@ bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//
 	if (!ok) return false;
 
 	
-	MarkChunkDirty(cx, cz);
+	MarkChunkLightDirty(cx, cz);
+	(cx, cz);
 	c->isEdited = true;
 
-	if (lx == 0) MarkChunkDirty(cx - 1, cz);
-	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkDirty(cx + 1, cz);
-	if (lz == 0) MarkChunkDirty(cx, cz - 1);
-	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkDirty(cx, cz + 1);
+	if (lx == 0) MarkChunkLightDirty(cx - 1, cz);
+	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx + 1, cz);
+	if (lz == 0) MarkChunkLightDirty(cx, cz - 1);
+	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx, cz + 1);
 
 	return true;
 }
@@ -250,13 +254,13 @@ bool World::SetBlockGlobalForProgram(int bx, int by, int bz, unsigned int block)
 	if (!ok) return false;
 
 
-	MarkChunkDirty(cx, cz);
+	MarkChunkLightDirty(cx, cz);
 	c->isEdited = true;
 
-	if (lx == 0) MarkChunkDirty(cx - 1, cz);
-	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkDirty(cx + 1, cz);
-	if (lz == 0) MarkChunkDirty(cx, cz - 1);
-	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkDirty(cx, cz + 1);
+	if (lx == 0) MarkChunkLightDirty(cx - 1, cz);
+	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx + 1, cz);
+	if (lz == 0) MarkChunkLightDirty(cx, cz - 1);
+	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx, cz + 1);
 
 	return true;
 }
@@ -366,7 +370,7 @@ void World::RebuildMeshQueue(int32_t curCx, int32_t curCz) {
 
 		c->isQueuedForMesh = false;
 
-		if (!c->isDirty) continue;
+		if (!c->isMeshDirty) continue;
 
 		pedding.push_back(c);
 
@@ -409,7 +413,7 @@ void World::ChunkGenerate(Chunk* c) {
 
 	terrainGen.Generate(c);
 	caveGen.ApplyCaves(c);
-	c->isDirty = true;
+	MarkChunkLightDirty(c->cx, c->cz);
 }
 
 
@@ -492,14 +496,42 @@ void World::ProcessGenQueue() {
 			c->isGenerated = true;
 			c->isQueuedForGen = false;
 
-			MarkChunkDirty(c->cx, c->cz);
-			MarkChunkDirty(c->cx + 1, c->cz);
-			MarkChunkDirty(c->cx - 1, c->cz);
-			MarkChunkDirty(c->cx, c->cz + 1);
-			MarkChunkDirty(c->cx, c->cz - 1);
+			MarkChunkLightDirty(c->cx, c->cz);
+			MarkChunkLightDirty(c->cx + 1, c->cz);
+			MarkChunkLightDirty(c->cx - 1, c->cz);
+			MarkChunkLightDirty(c->cx, c->cz + 1);
+			MarkChunkLightDirty(c->cx, c->cz - 1);
 		}
 	}
 
+
+}
+
+void World::ProcessLightQueue() {
+	int lightBudged = 3;
+	while (lightBudged-- > 0 && !lightRebuildQueue.empty()) {
+		uint64_t key = lightRebuildQueue.front();
+		lightRebuildQueue.pop_front();
+
+		auto it = Chunks.find(key);
+		if (it == Chunks.end() || !it->second) continue;
+
+		std::shared_ptr<Chunk> c = it->second;
+
+		if (!c) continue;
+
+		c->isQueuedForLight = false;
+		if (!c->isLightDirty) continue;
+
+		c->RebuildSkyLight();
+
+		MarkChunkMeshDirty(c->cx, c->cz);
+		MarkChunkMeshDirty(c->cx + 1, c->cz);
+		MarkChunkMeshDirty(c->cx - 1, c->cz);
+		MarkChunkMeshDirty(c->cx, c->cz + 1);
+		MarkChunkMeshDirty(c->cx, c->cz - 1);
+
+	}
 
 }
 
@@ -514,7 +546,7 @@ void World::ProcessMeshQueue() {
 		if (!c) continue;
 
 		c->isQueuedForMesh = false;
-		if (!c->isDirty) continue;
+		if (!c->isMeshDirty) continue;
 
 		meshBuilder.BuildMesh(c.get());
 

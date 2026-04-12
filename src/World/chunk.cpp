@@ -62,6 +62,8 @@ void Chunk::renderWater(GLuint program) {
 
 
 void Chunk::RebuildSkyLight() {
+	if (!isLightDirty) return;
+
 	for (auto& b : blocks) {
 		b.skyLight = 0;
 	}
@@ -159,4 +161,6 @@ void Chunk::RebuildSkyLight() {
 
 	}
 
+
+	isLightDirty = true;
 }

@@ -5,7 +5,6 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 	c->vertices.clear();
 	c->waterVertices.clear();
 
-	c->RebuildSkyLight();
 
 	float s = static_cast<float>(blockSize);
 
@@ -67,21 +66,24 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 					if (ny < 0) return 0;
 					if (ny >= Chunk::CHUNK_HEIGHT) return 15;
 
-					int targetCx = 1, targetCz = 1;
-					int lx = 0, ly = ny, lz = 0;
+					
+					int targetCx = 1;
+					int targetCz = 1;
+					int lx = nx;
+					int ly = ny;
+					int lz = nz;
 
 					if (nx < 0) { targetCx = 0; lx = Chunk::CHUNK_WIDTH - 1; }
-					else if (nx >= Chunk::CHUNK_WIDTH - 1) { targetCx = 2; lx = 0; }
+					else if (nx >= Chunk::CHUNK_WIDTH) { targetCx = 2; lx = 0; }
 
 					if (nz < 0) { targetCz = 0; lz = Chunk::CHUNK_WIDTH - 1; }
-					else if (nz >= Chunk::CHUNK_WIDTH - 1) { targetCz = 2; lz = 0; }
+					else if (nz >= Chunk::CHUNK_WIDTH) { targetCz = 2; lz = 0; }
 
 					Chunk* target = neighbors[targetCx][targetCz];
 					if (!target) return 0;
 					if (!target->isGenerated) return 0;
 
-
-					return target->blocks[Chunk::Index(lx, ly, lz)].skyLight;
+					return target->blocks[target->Index(lx, ly, lz)].skyLight;
 
 				};
 
@@ -126,7 +128,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				uint8_t frontSky = GetNeighborSkyLight(x, y, z - 1);
 
 				auto ToBrightness = [&](uint8_t sky) -> float {
-					return 0.2f + (sky / 15.0f) * 0.8f;
+					return 0.08f + (sky / 15.0f) * 0.92f;
 				};
 
 				float topLight = ToBrightness(topSky) * topLightThrehold;
@@ -262,6 +264,6 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 
 	glBindVertexArray(0);
 
-	c->isDirty = false;
+	c->isMeshDirty = false;
 	c->isEdited = false;
 }

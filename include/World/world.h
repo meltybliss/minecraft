@@ -95,6 +95,8 @@ private:
 
 	std::deque<std::weak_ptr<Chunk>> generationQueue;
 	
+	std::deque<uint64_t> lightRebuildQueue;
+
 	std::priority_queue<
 		std::shared_ptr<Chunk>,
 		std::vector<std::shared_ptr<Chunk>>,
@@ -119,7 +121,9 @@ private:
 
 	void WakeNearbyWater(int bx, int by, int bz);
 
-	void MarkChunkDirty(int32_t cx, int32_t cz);
+	
+	void MarkChunkMeshDirty(int32_t cx, int32_t cz);
+	void MarkChunkLightDirty(int32_t cx, int32_t cz);
 	
 	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
 	void GatherUnloadCandidates(int32_t curCx, int32_t curCz);
@@ -127,6 +131,7 @@ private:
 	void ChunkGenerate(Chunk* c);
 
 	void ProcessGenQueue();
+	void ProcessLightQueue();
 	void ProcessMeshQueue();
 	void ProcessGpuDeletes();
 	void ProcessUnloadQueue(int32_t curCx, int32_t curCz);
