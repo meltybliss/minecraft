@@ -157,7 +157,10 @@ void Chunk::RebuildSkyLight() {
 
 					newLight = curLight - 1;
 				}
-				else {
+				else if (nBlock == (unsigned int)BlockType::Leave) {
+					newLight = curLight - 3;
+				}
+				else if (nBlock == (unsigned int)BlockType::Water) {
 					newLight = curLight - 2;
 				}
 			}

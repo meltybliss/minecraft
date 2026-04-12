@@ -266,14 +266,11 @@ bool World::SetBlockGlobalForProgram(int bx, int by, int bz, unsigned int block)
 	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
 
-	bool ok = c->Set(lx, ly, lz, block);
-	if (ok && block == (unsigned int)BlockType::Water) {
-		EnqueueWaterProc(bx, by, bz);
-	}
-	else if (!ok) {
-		return false;
-	}
+	WakeNearbyWater(bx, by, bz);
 
+	bool ok = c->Set(lx, ly, lz, block);
+	if (!ok) return false;
+	
 
 	MarkChunkLightDirty(cx, cz, true);
 	c->isEdited = true;
