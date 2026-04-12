@@ -19,7 +19,8 @@ namespace BlockRenderUtils {
 	UVRect GetBlockUV(unsigned int block, FaceType face);
 	void AddVertex(std::vector<float>& v,
 		float x, float y, float z,
-		float u, float vv);
+		float u, float vv,
+		float light);
 
 	void AddFaceUVFlippedX(std::vector<float>& v,
 		float x0, float y0, float z0,
@@ -27,7 +28,8 @@ namespace BlockRenderUtils {
 		float x2, float y2, float z2,
 		float x3, float y3, float z3,
 		float u0, float v0,
-		float u1, float v1);
+		float u1, float v1,
+		float light);
 
 
 	void AddFaceUVRotLeft90(std::vector<float>& v,
@@ -36,7 +38,8 @@ namespace BlockRenderUtils {
 		float x2, float y2, float z2,
 		float x3, float y3, float z3,
 		float u0, float v0,
-		float u1, float v1);
+		float u1, float v1,
+		float light);
 
 
 	void AddFaceUV(std::vector<float>& v,
@@ -45,7 +48,8 @@ namespace BlockRenderUtils {
 		float x2, float y2, float z2,
 		float x3, float y3, float z3,
 		float u0, float v0,
-		float u1, float v1);
+		float u1, float v1,
+		float light);
 
 	void AppendBlockCube(std::vector<float>& v,
 		float bx, float by, float bz,

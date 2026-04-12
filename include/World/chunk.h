@@ -9,6 +9,7 @@
 #include "block.h"
 #include <stdint.h>
 #include <vector>
+#include <array>
 #include <iostream>
 #include <algorithm>
 #include <random>
@@ -43,10 +44,12 @@ struct Chunk {
 	static constexpr int CHUNK_WIDTH = 16;
 	static constexpr int CHUNK_SIZE = CHUNK_HEIGHT * CHUNK_WIDTH * CHUNK_WIDTH;
 
-	unsigned int blocks[CHUNK_SIZE]{};
+	Block blocks[CHUNK_SIZE]{};
 
 	std::vector<float> vertices;
 	std::vector<float> waterVertices;
+
+	std::array<uint8_t, CHUNK_WIDTH* CHUNK_WIDTH* CHUNK_HEIGHT> skyLights;
 
 	unsigned int vao = 0;
 	unsigned int vbo = 0;
@@ -70,7 +73,7 @@ struct Chunk {
 
 	unsigned int Get(int x, int y, int z) const {
 		if (!inRange(x, y, z)) return 0;
-		return blocks[Index(x, y, z)];
+		return blocks[Index(x, y, z)].type;
 	}
 
 	bool isAirBlock(int x, int y, int z) const {
@@ -80,11 +83,12 @@ struct Chunk {
 	bool Set(int x, int y, int z, unsigned int block) {
 		if (!inRange(x, y, z)) return false;
 
-		blocks[Index(x, y, z)] = block;
+		blocks[Index(x, y, z)].type = block;
 
 		return true;
 	}
 
+	void RebuildSkyLight();
 
 	static uint32_t makeChunkSeed(uint32_t worldSeed, int cx, int cz);
 	static uint64_t GetChunkKey(int32_t scx, int32_t scz);

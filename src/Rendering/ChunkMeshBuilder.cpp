@@ -7,6 +7,10 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 
 	float s = static_cast<float>(blockSize);
 
+	const float topLightThrehold = 1.0f;
+	const float sideLightThrehold = 0.8f;
+	const float bottomLightThrehold = 0.6f;
+
 	Chunk* neighbors[3][3];
 	for (int i = -1; i <= 1; i++) {
 		for (int j = -1; j <= 1; j++) {
@@ -21,6 +25,15 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 
 				unsigned int block = c->Get(x, y, z);
 				if (block == 0) continue;
+
+				int index = c->Index(x, y, z);
+
+				float baseBrightness = 0.2f + (c->blocks[index].skyLight / 15.0f) * 0.8f;
+
+				float topLight = baseBrightness * topLightThrehold;
+				float sideLight = baseBrightness * sideLightThrehold;
+				float bottomLight = baseBrightness * bottomLightThrehold;
+
 
 				float fx = static_cast<float>(x + c->cx * Chunk::CHUNK_WIDTH) * s;
 				float fy = static_cast<float>(y) * s;
@@ -74,6 +87,8 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 				};
 
 
+
+
 				auto self = block;
 				auto top = GetNeighborBlock(x, y + 1, z);
 				auto bottom = GetNeighborBlock(x, y - 1, z);
@@ -84,7 +99,6 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 
 				//top
 				if (ShouldDrawFace(self, top)) {
-					
 					UVRect uv = GetBlockUV(block, FaceType::Top);
 
 					AddFaceUV(outVerts,
@@ -92,9 +106,8 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 						fx + s, fy + s, fz,
 						fx + s, fy + s, fz + s,
 						fx, fy + s, fz + s,
-						uv.u0, uv.v0, uv.u1, uv.v1);
-
-
+						uv.u0, uv.v0, uv.u1, uv.v1,
+						topLight);
 				}
 
 				//bottom
@@ -105,19 +118,20 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 						fx, fy, fz + s,
 						fx + s, fy, fz + s,
 						fx + s, fy, fz,
-						uv.u0, uv.v0, uv.u1, uv.v1);
+						uv.u0, uv.v0, uv.u1, uv.v1,
+						bottomLight);
 				}
 
 				// right
 				if (ShouldDrawFace(self, right)) {
-
 					UVRect uv = GetBlockUV(block, FaceType::Side);
 					AddFaceUVFlippedX(outVerts,
 						fx + s, fy, fz,
 						fx + s, fy, fz + s,
 						fx + s, fy + s, fz + s,
 						fx + s, fy + s, fz,
-						uv.u0, uv.v0, uv.u1, uv.v1);
+						uv.u0, uv.v0, uv.u1, uv.v1,
+						sideLight);
 				}
 
 				// left
@@ -128,7 +142,8 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 						fx, fy, fz + s,
 						fx, fy + s, fz + s,
 						fx, fy + s, fz,
-						uv.u0, uv.v0, uv.u1, uv.v1);
+						uv.u0, uv.v0, uv.u1, uv.v1,
+						sideLight);
 				}
 
 				// back
@@ -139,7 +154,8 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 						fx, fy + s, fz + s,
 						fx + s, fy + s, fz + s,
 						fx + s, fy, fz + s,
-						uv.u0, uv.v0, uv.u1, uv.v1);
+						uv.u0, uv.v0, uv.u1, uv.v1,
+						sideLight);
 				}
 
 				// front
@@ -150,7 +166,8 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 						fx + s, fy, fz,
 						fx + s, fy + s, fz,
 						fx, fy + s, fz,
-						uv.u0, uv.v0, uv.u1, uv.v1);
+						uv.u0, uv.v0, uv.u1, uv.v1,
+						sideLight);
 				}
 			}
 		}
@@ -163,7 +180,7 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 		return;
 	}
 
-	c->vertexCount = static_cast<int>(c->vertices.size() / 5);
+	c->vertexCount = static_cast<int>(c->vertices.size() / 6);
 
 
 	if (c->vao == 0) glGenVertexArrays(1, &c->vao);
@@ -174,15 +191,18 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 	glBufferData(GL_ARRAY_BUFFER, c->vertices.size() * sizeof(float), c->vertices.data(), GL_STATIC_DRAW);
 
 	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	// uv
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+	// light
+	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
-	c->waterVertexCount = static_cast<int>(c->waterVertices.size() / 5);
+	c->waterVertexCount = static_cast<int>(c->waterVertices.size() / 6);
 
 	if (c->waterVAO == 0) glGenVertexArrays(1, &c->waterVAO);
 	if (c->waterVBO == 0) glGenBuffers(1, &c->waterVBO);
@@ -191,11 +211,14 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 	glBindBuffer(GL_ARRAY_BUFFER, c->waterVBO);
 	glBufferData(GL_ARRAY_BUFFER, c->waterVertices.size() * sizeof(float), c->waterVertices.data(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 
 	glBindVertexArray(0);

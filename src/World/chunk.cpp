@@ -59,3 +59,40 @@ void Chunk::renderWater(GLuint program) {
 	glDepthMask(GL_TRUE);
 	glDisable(GL_BLEND);
 }
+
+
+void Chunk::RebuildSkyLight() {
+	for (auto& b : blocks) {
+		b.skyLight = 0;
+	}
+
+	for (int x = 0; x < CHUNK_WIDTH; x++) {
+		for (int z = 0; z < CHUNK_WIDTH; z++) {
+
+			bool blocked = false;
+
+			for (int y = CHUNK_HEIGHT - 1; y >= 0; y--) {
+
+				int index = Index(x, y, z);
+				if (!blocked) {
+					
+					blocks[index].skyLight = 15;
+					if (Get(x, y, z) != 0) {
+
+						blocked = true;
+					}
+				}
+				else {
+
+					blocks[index].skyLight = 0;
+					
+
+				}
+
+			}
+
+
+		}
+	}
+
+}

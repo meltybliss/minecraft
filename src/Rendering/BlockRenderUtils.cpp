@@ -83,15 +83,16 @@ UVRect BlockRenderUtils::GetBlockUV(unsigned int block, FaceType face) {
 
 void BlockRenderUtils::AddVertex(std::vector<float>& v,
 	float x, float y, float z,
-	float u, float vv)
+	float u, float vv,
+	float light)
 {
 	v.push_back(x);
 	v.push_back(y);
 	v.push_back(z);
 	v.push_back(u);
 	v.push_back(vv);
+	v.push_back(light);
 }
-
 
 void BlockRenderUtils::AddFaceUVFlippedX(std::vector<float>& v,
 	float x0, float y0, float z0,
@@ -99,15 +100,16 @@ void BlockRenderUtils::AddFaceUVFlippedX(std::vector<float>& v,
 	float x2, float y2, float z2,
 	float x3, float y3, float z3,
 	float u0, float v0,
-	float u1, float v1)
+	float u1, float v1,
+	float light)
 {
-	AddVertex(v, x0, y0, z0, u1, v0);
-	AddVertex(v, x1, y1, z1, u0, v0);
-	AddVertex(v, x2, y2, z2, u0, v1);
+	AddVertex(v, x0, y0, z0, u1, v0, light);
+	AddVertex(v, x1, y1, z1, u0, v0, light);
+	AddVertex(v, x2, y2, z2, u0, v1, light);
 
-	AddVertex(v, x2, y2, z2, u0, v1);
-	AddVertex(v, x3, y3, z3, u1, v1);
-	AddVertex(v, x0, y0, z0, u1, v0);
+	AddVertex(v, x2, y2, z2, u0, v1, light);
+	AddVertex(v, x3, y3, z3, u1, v1, light);
+	AddVertex(v, x0, y0, z0, u1, v0, light);
 }
 
 
@@ -117,15 +119,16 @@ void BlockRenderUtils::AddFaceUVRotLeft90(std::vector<float>& v,
 	float x2, float y2, float z2,
 	float x3, float y3, float z3,
 	float u0, float v0,
-	float u1, float v1)
+	float u1, float v1,
+	float light)
 {
-	AddVertex(v, x0, y0, z0, u1, v0);
-	AddVertex(v, x1, y1, z1, u1, v1);
-	AddVertex(v, x2, y2, z2, u0, v1);
+	AddVertex(v, x0, y0, z0, u1, v0, light);
+	AddVertex(v, x1, y1, z1, u1, v1, light);
+	AddVertex(v, x2, y2, z2, u0, v1, light);
 
-	AddVertex(v, x2, y2, z2, u0, v1);
-	AddVertex(v, x3, y3, z3, u0, v0);
-	AddVertex(v, x0, y0, z0, u1, v0);
+	AddVertex(v, x2, y2, z2, u0, v1, light);
+	AddVertex(v, x3, y3, z3, u0, v0, light);
+	AddVertex(v, x0, y0, z0, u1, v0, light);
 }
 
 
@@ -135,15 +138,16 @@ void BlockRenderUtils::AddFaceUV(std::vector<float>& v,
 	float x2, float y2, float z2,
 	float x3, float y3, float z3,
 	float u0, float v0,
-	float u1, float v1)
+	float u1, float v1,
+	float light)
 {
-	AddVertex(v, x0, y0, z0, u0, v0);
-	AddVertex(v, x1, y1, z1, u1, v0);
-	AddVertex(v, x2, y2, z2, u1, v1);
+	AddVertex(v, x0, y0, z0, u0, v0, light);
+	AddVertex(v, x1, y1, z1, u1, v0, light);
+	AddVertex(v, x2, y2, z2, u1, v1, light);
 
-	AddVertex(v, x2, y2, z2, u1, v1);
-	AddVertex(v, x3, y3, z3, u0, v1);
-	AddVertex(v, x0, y0, z0, u0, v0);
+	AddVertex(v, x2, y2, z2, u1, v1, light);
+	AddVertex(v, x3, y3, z3, u0, v1, light);
+	AddVertex(v, x0, y0, z0, u0, v0, light);
 }
 
 
@@ -159,6 +163,8 @@ void BlockRenderUtils::AppendBlockCube(std::vector<float>& v,
 	const float y1 = by + 1.0f;
 	const float z1 = bz + 1.0f;
 
+
+
 	UVRect top = GetBlockUV(block, FaceType::Top);
 	UVRect bottom = GetBlockUV(block, FaceType::Bottom);
 	UVRect side = GetBlockUV(block, FaceType::Side);
@@ -169,7 +175,7 @@ void BlockRenderUtils::AppendBlockCube(std::vector<float>& v,
 		x1, y1, z0,
 		x1, y1, z1,
 		x0, y1, z1,
-		top.u0, top.v0, top.u1, top.v1);
+		top.u0, top.v0, top.u1, top.v1, 1.0f);
 
 	// Bottom
 	AddFaceUV(v,
@@ -177,7 +183,7 @@ void BlockRenderUtils::AppendBlockCube(std::vector<float>& v,
 		x1, y0, z1,
 		x1, y0, z0,
 		x0, y0, z0,
-		bottom.u0, bottom.v0, bottom.u1, bottom.v1);
+		bottom.u0, bottom.v0, bottom.u1, bottom.v1, 1.0f);
 
 	// Front
 	AddFaceUV(v,
@@ -185,7 +191,7 @@ void BlockRenderUtils::AppendBlockCube(std::vector<float>& v,
 		x1, y0, z1,
 		x1, y1, z1,
 		x0, y1, z1,
-		side.u0, side.v0, side.u1, side.v1);
+		side.u0, side.v0, side.u1, side.v1, 1.0f);
 
 	// Back
 	AddFaceUVFlippedX(v,
@@ -193,7 +199,7 @@ void BlockRenderUtils::AppendBlockCube(std::vector<float>& v,
 		x0, y0, z0,
 		x0, y1, z0,
 		x1, y1, z0,
-		side.u0, side.v0, side.u1, side.v1);
+		side.u0, side.v0, side.u1, side.v1, 1.0f);
 
 	// Left
 	AddFaceUV(v,
@@ -201,7 +207,7 @@ void BlockRenderUtils::AppendBlockCube(std::vector<float>& v,
 		x0, y0, z1,
 		x0, y1, z1,
 		x0, y1, z0,
-		side.u0, side.v0, side.u1, side.v1);
+		side.u0, side.v0, side.u1, side.v1, 1.0f);
 
 	// Right
 	AddFaceUVFlippedX(v,
@@ -209,5 +215,5 @@ void BlockRenderUtils::AppendBlockCube(std::vector<float>& v,
 		x1, y0, z0,
 		x1, y1, z0,
 		x1, y1, z1,
-		side.u0, side.v0, side.u1, side.v1);
+		side.u0, side.v0, side.u1, side.v1, 1.0f);
 }

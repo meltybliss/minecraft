@@ -37,7 +37,7 @@ void TerrainGenerator::FillTerrain(Chunk* c) {
 				}
 
 
-				c->blocks[c->Index(x, y, z)] = static_cast<unsigned int>(b);
+				c->blocks[c->Index(x, y, z)].type = static_cast<unsigned int>(b);
 			}
 		}
 	}
