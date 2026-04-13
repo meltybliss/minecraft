@@ -1,6 +1,9 @@
 #include "World/world.h"
+#include "Util/MathUtils.h"
 #include "Core/game.h"
+#include "World/SkyLightRegionCache.h"
 #include <chrono>
+
 
 World* gWorld = nullptr;
 
@@ -9,10 +12,6 @@ static double GetTimeMs() {
 	return duration<double, std::milli>(
 		steady_clock::now().time_since_epoch()
 	).count();
-}
-
-static int32_t FloorDiv(int v, int b) {
-	return static_cast<int32_t>(std::floor(static_cast<float>(v) / b));
 }
 
 World::World() : worldSeed(123456789u), meshQueue(ChunkPriority{ 0, 0 }), TNTRng(std::random_device{}()) {
@@ -119,6 +118,7 @@ void World::Tick(float dt) {
 		ProcessGenQueue();
 		ProcessUrgentLightQueue(lightCommonBudged);
 
+	
 	}
 	else {
 		
@@ -250,6 +250,8 @@ bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//
 	int ly = by;
 	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
+	uint8_t oldSky = GetSkylightGlobal(bx, by, bz);
+
 	if (block != 0) {
 		bool ok = c->isAirBlock(lx, ly, lz);
 
@@ -269,14 +271,22 @@ bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//
 	if (!ok) return false;
 
 	
-	MarkChunkLightDirty(cx, cz, true);
-	(cx, cz);
+	//MarkChunkLightDirty(cx, cz, true);
+	MarkChunkMeshDirty(cx, cz);
+	
 	c->isEdited = true;
 
 	if (lx == 0) MarkChunkMeshDirty(cx - 1, cz);
 	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkMeshDirty(cx + 1, cz);
 	if (lz == 0) MarkChunkMeshDirty(cx, cz - 1);
 	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkMeshDirty(cx, cz + 1);
+
+	if (block == 0) {
+		PropagateSkylightAdd(bx, by, bz);
+	}
+	else {
+		PropagateSkylightRemove(bx, by, bz, oldSky);
+	}
 
 	return true;
 }
@@ -296,19 +306,32 @@ bool World::SetBlockGlobalForProgram(int bx, int by, int bz, unsigned int block)
 	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
 
-	WakeNearbyWater(bx, by, bz);
+	uint8_t oldSky = GetSkylightGlobal(bx, by, bz);
+
+	if (block == 0) {
+		WakeNearbyWater(bx, by, bz);
+	}
 
 	bool ok = c->Set(lx, ly, lz, block);
 	if (!ok) return false;
 	
 
-	MarkChunkLightDirty(cx, cz, true);
+	//MarkChunkLightDirty(cx, cz, true);
+	MarkChunkMeshDirty(cx, cz);
+	(cx, cz);
 	c->isEdited = true;
 
 	if (lx == 0) MarkChunkMeshDirty(cx - 1, cz);
 	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkMeshDirty(cx + 1, cz);
 	if (lz == 0) MarkChunkMeshDirty(cx, cz - 1);
 	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkMeshDirty(cx, cz + 1);
+
+	if (block == 0) {
+		PropagateSkylightAdd(bx, by, bz);
+	}
+	else {
+		PropagateSkylightRemove(bx, by, bz, oldSky);
+	}
 
 	return true;
 }
@@ -337,7 +360,7 @@ uint8_t World::GetSkylightGlobal(int bx, int by, int bz) {
 
 	int lx = bx - cx * Chunk::CHUNK_WIDTH;
 	int ly = by;
-	int lz = bz - cx * Chunk::CHUNK_WIDTH;
+	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
 	if (lx < 0 || lx >= Chunk::CHUNK_WIDTH) return 0;
 	if (ly < 0 || ly >= Chunk::CHUNK_HEIGHT) return 0;
@@ -347,7 +370,6 @@ uint8_t World::GetSkylightGlobal(int bx, int by, int bz) {
 
 	return c->blocks[idx].skyLight;
 }
-
 
 bool World::SetSkylightGlobal(int bx, int by, int bz, uint8_t light) {
 	int32_t cx = FloorDiv(bx, Chunk::CHUNK_WIDTH);
@@ -362,13 +384,15 @@ bool World::SetSkylightGlobal(int bx, int by, int bz, uint8_t light) {
 
 	int lx = bx - cx * Chunk::CHUNK_WIDTH;
 	int ly = by;
-	int lz = bz - cx * Chunk::CHUNK_WIDTH;
+	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
 	if (lx < 0 || lx >= Chunk::CHUNK_WIDTH) return false;
 	if (ly < 0 || ly >= Chunk::CHUNK_HEIGHT) return false;
 	if (lz < 0 || lz >= Chunk::CHUNK_WIDTH) return false;
 
 	int idx = Chunk::Index(lx, ly, lz);
+
+	if (c->blocks[idx].skyLight == light) return false;
 
 	c->blocks[idx].skyLight = light;
 	MarkChunkMeshDirtyByBlock(bx, by, bz);
@@ -390,13 +414,15 @@ bool World::SetSkylightGlobalNoDirty(int bx, int by, int bz, uint8_t light) {
 
 	int lx = bx - cx * Chunk::CHUNK_WIDTH;
 	int ly = by;
-	int lz = bz - cx * Chunk::CHUNK_WIDTH;
+	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
 	if (lx < 0 || lx >= Chunk::CHUNK_WIDTH) return false;
 	if (ly < 0 || ly >= Chunk::CHUNK_HEIGHT) return false;
 	if (lz < 0 || lz >= Chunk::CHUNK_WIDTH) return false;
 
 	int idx = Chunk::Index(lx, ly, lz);
+
+	if (c->blocks[idx].skyLight == light) return false;
 
 	c->blocks[idx].skyLight = light;
 	
@@ -671,6 +697,117 @@ HitResult World::TraceRay(Ray& ray, float maxDist) {
 
 
 #pragma region WORLD_LIGHT_CALC_BUFFER
+
+void World::RebuildSkylightRegionFast(int32_t cx, int32_t cz) {
+	SkylightRegionCache cache;
+	cache.baseCx = cx - 1;
+	cache.baseCz = cz - 1;
+
+	// 3x3 chunk cache
+	for (int dx = 0; dx < 3; dx++) {
+		for (int dz = 0; dz < 3; dz++) {
+			cache.chunks[dx][dz] = GetChunkPtr(cache.baseCx + dx, cache.baseCz + dz);
+		}
+	}
+
+	int startBx = (cx - 1) * Chunk::CHUNK_WIDTH;
+	int endBx = (cx + 2) * Chunk::CHUNK_WIDTH;
+	int startBz = (cz - 1) * Chunk::CHUNK_WIDTH;
+	int endBz = (cz + 2) * Chunk::CHUNK_WIDTH;
+
+	// 1. skylight clear
+	for (int rx = 0; rx < 3; rx++) {
+		for (int rz = 0; rz < 3; rz++) {
+			Chunk* c = cache.chunks[rx][rz];
+			if (!c) continue;
+
+			for (int y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
+				for (int lz = 0; lz < Chunk::CHUNK_WIDTH; lz++) {
+					for (int lx = 0; lx < Chunk::CHUNK_WIDTH; lx++) {
+						int idx = Chunk::Index(lx, y, lz);
+						c->blocks[idx].skyLight = 0;
+					}
+				}
+			}
+		}
+	}
+
+	std::queue<LightNode> q;
+
+	// 2. top-down seed
+	for (int bx = startBx; bx < endBx; bx++) {
+		for (int bz = startBz; bz < endBz; bz++) {
+			for (int y = Chunk::CHUNK_HEIGHT - 1; y >= 0; y--) {
+				unsigned int block = cache.GetBlockId(bx, y, bz);
+
+				if (block == 0) {
+					cache.SetSky(bx, y, bz, 15);
+					q.push({ bx, y, bz, 15 });
+				}
+				else {
+					break;
+				}
+			}
+		}
+	}
+
+	// 3. BFS
+	const int dirs[5][3] = {
+		{ 1, 0, 0 },
+		{-1, 0, 0 },
+		{ 0, 0, 1 },
+		{ 0, 0,-1 },
+		{ 0,-1, 0 }
+	};
+
+	while (!q.empty()) {
+		LightNode cur = q.front();
+		q.pop();
+
+		uint8_t curLight = cur.skyLight;
+		if (curLight == 0) continue;
+
+		for (const auto& d : dirs) {
+			int nx = cur.x + d[0];
+			int ny = cur.y + d[1];
+			int nz = cur.z + d[2];
+
+			if (nx < startBx || nx >= endBx) continue;
+			if (nz < startBz || nz >= endBz) continue;
+			if (ny < 0 || ny >= Chunk::CHUNK_HEIGHT) continue;
+			if (!cache.IsTransparent(nx, ny, nz)) continue;
+
+			unsigned int nBlock = cache.GetBlockId(nx, ny, nz);
+			uint8_t oldLight = cache.GetSky(nx, ny, nz);
+			uint8_t newLight = 0;
+
+			if (d[0] == 0 && d[1] == -1 && d[2] == 0 && curLight == 15) {
+				newLight = 15;
+			}
+			else {
+				uint8_t att = cache.ComputeAttenuation(nBlock);
+				if (curLight <= att) continue;
+				newLight = static_cast<uint8_t>(curLight - att);
+			}
+
+			if (newLight > oldLight) {
+				cache.SetSky(nx, ny, nz, newLight);
+				q.push({ nx, ny, nz, newLight });
+			}
+		}
+	}
+
+	// 4. mark dirty once
+	for (int dx = -1; dx <= 1; dx++) {
+		for (int dz = -1; dz <= 1; dz++) {
+			Chunk* c = GetChunkPtr(cx + dx, cz + dz);
+			if (!c) continue;
+			c->isLightDirty = false;
+			MarkChunkMeshDirty(cx + dx, cz + dz);
+		}
+	}
+}
+
 void World::RebuildSkylightRegion(int32_t cx, int32_t cz) {
 
 	int startBx = (cx - 1) * Chunk::CHUNK_WIDTH;
@@ -730,6 +867,8 @@ void World::RebuildSkylightRegion(int32_t cx, int32_t cz) {
 
 			if (ny < 0 || ny >= Chunk::CHUNK_HEIGHT) continue;
 
+			if (nx < startBx || nx >= endBx || nz < startBz || nz >= endBz) continue;
+
 			unsigned int nBlock = GetBlockGlobal(nx, ny, nz);
 
 			if (!IsTransparentGlobal(nx, ny, nz)) continue;
@@ -768,9 +907,13 @@ void World::RebuildSkylightRegion(int32_t cx, int32_t cz) {
 
 	for (int dx = -1; dx <= 1; dx++) {
 		for (int dz = -1; dz <= 1; dz++) {
+			Chunk* c = GetChunkPtr(cx + dx, cz + dz);
+			if (!c) continue;
+			c->isLightDirty = false;
 			MarkChunkMeshDirty(cx + dx, cz + dz);
 		}
 	}
+
 }
 #pragma endregion WORLD_LIGHT_CALC_BUFFER
 
@@ -829,7 +972,8 @@ void World::ChunkGenerate(Chunk* c) {
 
 	terrainGen.Generate(c);
 	caveGen.ApplyCaves(c);
-	MarkChunkLightDirty(c->cx, c->cz, false);
+	MarkChunkLightDirty(c->cx, c->cz, true);
+	MarkChunkMeshDirty(c->cx, c->cz);
 }
 
 
@@ -937,7 +1081,9 @@ void World::ProcessUrgentLightQueue(int& lightBudged) {
 		c->isQueuedForLight = false;
 		if (!c->isLightDirty) continue;
 
-		this->RebuildSkylightRegion(c->cx, c->cz);
+
+		//c->RebuildSkyLight();
+		this->RebuildSkylightRegionFast(c->cx, c->cz);
 
 
 		lightBudged--;
@@ -964,7 +1110,9 @@ void World::ProcessNormalLightQueue(int& lightBudged) {
 		c->isQueuedForLight = false;
 		if (!c->isLightDirty) continue;
 
-		this->RebuildSkylightRegion(c->cx, c->cz);
+
+		//c->RebuildSkyLight();
+		this->RebuildSkylightRegionFast(c->cx, c->cz);
 
 		lightBudged--;
 
@@ -1136,7 +1284,7 @@ bool World::ProcessOneUrgentLightJob() {
 	c->isQueuedForLight = false;
 	if (!c->isLightDirty) return false;
 
-	RebuildSkylightRegion(c->cx, c->cz);
+	RebuildSkylightRegionFast(c->cx, c->cz);
 	return true;
 }
 
@@ -1155,7 +1303,7 @@ bool World::ProcessOneNormalLightJob() {
 	c->isQueuedForLight = false;
 	if (!c->isLightDirty) return false;
 
-	RebuildSkylightRegion(c->cx, c->cz);
+	RebuildSkylightRegionFast(c->cx, c->cz);
 	return true;
 }
 

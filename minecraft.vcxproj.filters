@@ -194,6 +194,9 @@
     <ClInclude Include="include\World\world.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="include\World\SkyLightRegionCache.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\shaders\basic.frag">

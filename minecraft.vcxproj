@@ -182,6 +182,7 @@
     <ClInclude Include="include\World\chunk.h" />
     <ClInclude Include="include\World\ChunkPriority.h" />
     <ClInclude Include="include\World\GetSurfaceHeight.h" />
+    <ClInclude Include="include\World\SkyLightRegionCache.h" />
     <ClInclude Include="include\World\TerrainGenerator.h" />
     <ClInclude Include="include\World\WaterStruct.h" />
     <ClInclude Include="include\World\world.h" />

@@ -55,3 +55,8 @@ void CarveEllipsoid(Chunk* c, int cx, int cy, int cz, int rx, int ry, int rz) {
 		}
 	}
 }
+
+
+int32_t FloorDiv(int v, int b) {
+	return static_cast<int32_t>(std::floor(static_cast<float>(v) / b));
+}

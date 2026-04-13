@@ -95,8 +95,8 @@ private:
 	uint32_t worldSeed;
 	std::mt19937 TNTRng;
 
-	int RENDER_DISTANCE = 30;
-	int UNLOAD_DISTANCE = 34;
+	int RENDER_DISTANCE = 10;//30
+	int UNLOAD_DISTANCE = 14;//34
 
 	ChunkMeshBuilder meshBuilder;
 	TerrainGenerator terrainGen;
@@ -141,12 +141,14 @@ private:
 
 	void InitRegionSkyLight();
 	void RebuildSkylightRegion(int32_t cx, int32_t cz);
+	void RebuildSkylightRegionFast(int32_t cx, int32_t cz);
 
 	
 	void MarkChunkMeshDirty(int32_t cx, int32_t cz);
 	void MarkChunkLightDirty(int32_t cx, int32_t cz, bool urgent);
 	void MarkChunkMeshDirtyByBlock(int bx, int by, int bz);
 	
+
 	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
 	void GatherUnloadCandidates(int32_t curCx, int32_t curCz);
 
