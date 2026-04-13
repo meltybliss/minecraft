@@ -377,6 +377,209 @@ HitResult World::TraceRay(Ray& ray, float maxDist) {
 
 
 
+void World::RebuildSkylightRegion(int32_t cx, int32_t cz) {
+
+	if (!gWorld->GetChunkPtr(cx, cz)->isLightDirty) return;
+
+	static Chunk* neighbors[3][3];
+	for (int x = -1; x <= 1; x++) {
+		for (int z = -1; z <= 1; z++) {
+			neighbors[x + 1][z + 1] = gWorld->GetChunkPtr(cx + x, cz + z);
+		}
+	}
+
+
+	for (auto& row : neighbors) {
+		for (auto& c : row) {
+			if (!c) continue;
+
+			for (auto& b : c->blocks) {
+				b.skyLight = 0;
+			}
+		}
+	}
+
+	static const int REGION_W = Chunk::CHUNK_WIDTH * 3;
+
+	uint8_t REGION_BUFFER[REGION_W * REGION_W * Chunk::CHUNK_HEIGHT]{};
+
+
+	struct LightNode {
+		int x, y, z;
+	};
+
+	std::queue<LightNode> q;
+
+	auto IsTransparent = [&](const unsigned int b) -> bool {
+		return b == 0 || b == (unsigned int)BlockType::Leave || b == (unsigned int)BlockType::Water;
+	};
+
+	auto IsAir = [&](const unsigned int b) -> bool {
+		return b == 0;
+	};
+
+	auto GetTargetChunk = [&](int x, int z) -> Chunk* {
+		int targetCx = 0, targetCz = 0;
+
+		if (x >= Chunk::CHUNK_WIDTH && x < Chunk::CHUNK_WIDTH * 2) { targetCx = 1; }
+		else if (x >= Chunk::CHUNK_WIDTH * 2 && x < Chunk::CHUNK_WIDTH * 3) { targetCx = 2; }
+
+		if (z >= Chunk::CHUNK_WIDTH && z < Chunk::CHUNK_WIDTH * 2) { targetCz = 1; }
+		else if (z >= Chunk::CHUNK_WIDTH * 2 && z < Chunk::CHUNK_WIDTH * 3) { targetCz = 2; }
+
+		Chunk* target = neighbors[targetCx][targetCz];
+		if (!target) return nullptr;
+
+		return target;
+
+	};
+
+	auto LocalXZ = [](int rxz) -> int {
+		return rxz % Chunk::CHUNK_WIDTH;
+	};
+
+	auto RegionIndex = [&](int x, int y, int z) -> int {
+		return x + z * REGION_W + y * REGION_W * REGION_W;
+	};
+
+
+	for (int x = 0; x < Chunk::CHUNK_WIDTH * 3; x++) {
+		for (int z = 0; z < Chunk::CHUNK_WIDTH * 3; z++) {
+
+			for (int y = Chunk::CHUNK_HEIGHT - 1; y >= 0; y--) {
+
+
+				auto* c = GetTargetChunk(x, z);
+				int lx = LocalXZ(x);
+				int lz = LocalXZ(z);
+
+				unsigned int block = c->Get(lx, y, lz);
+
+				if (IsAir(block)) {
+					int rIdx = RegionIndex(x, y, z);
+					REGION_BUFFER[rIdx] = 15;
+					q.push({ x, y, z });
+				}
+				else {
+
+					break;
+				}
+
+			}
+
+
+		}
+	}
+
+
+	while (!q.empty()) {
+		LightNode cur = q.front();
+		q.pop();
+
+		Chunk* c = GetTargetChunk(cur.x, cur.z);
+		if (!c) continue;
+
+		int lx = LocalXZ(cur.x);
+		int lz = LocalXZ(cur.z);
+		int ly = cur.y;
+
+		int curIdx = RegionIndex(cur.x, cur.y, cur.z);
+		uint8_t curLight = REGION_BUFFER[curIdx];
+
+		
+
+		if (curLight == 0) continue;
+
+		//right, left, front, back, down
+		const int dirs[5][3] = {
+			{1, 0, 0},
+			{-1, 0, 0},
+			{0, 0, 1},
+			{0, 0, -1},
+			{0, -1, 0},
+
+		};
+
+		for (const auto& dir : dirs) {
+			int nx = cur.x + dir[0];
+			int ny = cur.y + dir[1];
+			int nz = cur.z + dir[2];
+
+
+			if (nx < 0 || nx >= REGION_W) continue;
+			if (nz < 0 || nz >= REGION_W) continue;
+			if (ny < 0 || ny >= Chunk::CHUNK_HEIGHT) continue;
+
+
+			c = GetTargetChunk(nx, nz);
+			if (!c) continue;
+
+			int lx = LocalXZ(nx);
+			int lz = LocalXZ(nz);
+			int ly = ny;
+
+			int nrIdx = RegionIndex(nx, ny, nz);
+			int nIdx = c->Index(lx, ly, lz);
+			unsigned int nBlock = c->blocks[nIdx].type;
+
+			if (!IsTransparent(nBlock)) continue;
+
+			uint8_t newLight = 0;
+
+			if (dir[0] == 0 && dir[1] == -1 && dir[2] == 0 && curLight == 15) {
+
+				newLight = curLight;
+			}
+			else {
+				if (curLight <= 1) continue;
+
+				if (IsAir(nBlock)) {
+
+					newLight = curLight - 1;
+				}
+				else if (nBlock == (unsigned int)BlockType::Leave) {
+					newLight = curLight - 3;
+				}
+				else if (nBlock == (unsigned int)BlockType::Water) {
+					newLight = curLight - 2;
+				}
+			}
+
+			if (newLight > REGION_BUFFER[nrIdx]) {
+				REGION_BUFFER[nrIdx] = newLight;
+				q.push({ nx, ny, nz });
+			}
+
+		}
+
+
+	}
+
+
+	//swap buffer. adapt to real skylight
+	for (int x = 0; x < REGION_W; x++) {
+		for (int z = 0; z < REGION_W; z++) {
+			Chunk* c = GetTargetChunk(x, z);
+			if (!c) continue;
+
+			int lx = LocalXZ(x);
+			int lz = LocalXZ(z);
+
+			for (int y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
+				int rIdx = RegionIndex(x, y, z);
+				int idx = c->Index(lx, y, lz);
+
+				c->blocks[idx].skyLight = REGION_BUFFER[rIdx];
+			}
+		}
+	}
+
+
+	Chunk* center = neighbors[1][1];
+	if (center) center->isLightDirty = false;
+}
+
+
 void World::RebuildMeshQueue(int32_t curCx, int32_t curCz) {
 	std::vector<std::shared_ptr<Chunk>> pedding;
 

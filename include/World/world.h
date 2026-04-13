@@ -123,6 +123,8 @@ private:
 
 	void WakeNearbyWater(int bx, int by, int bz);
 
+	void RebuildSkylightRegion(int32_t cx, int32_t cz);
+
 	
 	void MarkChunkMeshDirty(int32_t cx, int32_t cz);
 	void MarkChunkLightDirty(int32_t cx, int32_t cz, bool urgent);
