@@ -64,12 +64,21 @@ void Chunk::renderWater(GLuint program) {
 void Chunk::RebuildSkyLight() {
 	if (!isLightDirty) return;
 
+	static Chunk* neighbors[3][3];
+	for (int x = -1; x <= 1; x++) {
+		for (int z = -1; z <= 1; z++) {
+			neighbors[x + 1][z + 1] = gWorld->GetChunkPtr(cx + x, cz + z);
+		}
+	}
+
+
 	for (auto& b : blocks) {
 		b.skyLight = 0;
 	}
 
 	struct LightNode {
 		int x, y, z;
+		Chunk* c;
 	};
 
 	std::queue<LightNode> q;
@@ -99,7 +108,7 @@ void Chunk::RebuildSkyLight() {
 				if (IsAir(block)) {
 					int index = Index(x, y, z);
 					blocks[index].skyLight = 15;
-					q.push({ x, y, z });
+					q.push({ x, y, z, this });
 				}
 				else {
 
@@ -120,6 +129,8 @@ void Chunk::RebuildSkyLight() {
 		int curIdx = Index(cur.x, cur.y, cur.z);
 		uint8_t curLight = blocks[curIdx].skyLight;
 
+		Chunk* targetChunk = cur.c;
+
 		if (curLight == 0) continue;
 
 		//right, left, front, back, down
@@ -137,10 +148,25 @@ void Chunk::RebuildSkyLight() {
 			int ny = cur.y + dir[1];
 			int nz = cur.z + dir[2];
 
-			if (!InBounds(nx, ny, nz)) continue;
+
+			int targetCx = 1, targetCz = 1;
+
+			if (!InBounds(nx, ny, nz)) {
+					
+				if (nx < 0) { targetCx = 0; nx = CHUNK_WIDTH - 1; }
+				else if (nx >= CHUNK_WIDTH) { targetCx = 2; nx = 0; }
+
+				if (nz < 0) { targetCz = 0; nz = CHUNK_WIDTH - 1; }
+				else if (nz >= CHUNK_WIDTH) { targetCz = 2; nz = 0; }
+
+				targetChunk = neighbors[targetCx][targetCz];
+			}
+			else {
+				if (targetChunk != this) targetChunk = this;
+			}
 
 			int nIdx = Index(nx, ny, nz);
-			unsigned int nBlock = blocks[nIdx].type;
+			unsigned int nBlock = cur.c->blocks[nIdx].type;
 
 			if (!IsTransparent(nBlock)) continue;
 
@@ -166,8 +192,8 @@ void Chunk::RebuildSkyLight() {
 			}
 
 			if (newLight > blocks[nIdx].skyLight) {
-				blocks[nIdx].skyLight = newLight;
-				q.push({ nx, ny, nz });
+				cur.c->blocks[nIdx].skyLight = newLight;
+				q.push({ nx, ny, nz, targetChunk });
 			}
 
 		}

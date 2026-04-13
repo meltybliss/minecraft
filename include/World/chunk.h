@@ -54,7 +54,6 @@ struct Chunk {
 	std::vector<float> vertices;
 	std::vector<float> waterVertices;
 
-	std::array<uint8_t, CHUNK_WIDTH* CHUNK_WIDTH* CHUNK_HEIGHT> skyLights;
 
 	unsigned int vao = 0;
 	unsigned int vbo = 0;
