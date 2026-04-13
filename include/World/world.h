@@ -24,6 +24,20 @@
 #include "BlockPos.h"
 #include "WaterStruct.h"
 
+
+
+
+struct LightNode {
+	int x, y, z;
+	uint8_t skyLight = 0;
+};
+
+struct RemoveNode {
+	int x, y, z;
+	uint8_t oldLight;
+};
+
+
 class World {
 public:
 	World();
@@ -117,29 +131,50 @@ private:
 	std::vector<std::unique_ptr<Entity>> entities;
 	std::vector<std::unique_ptr<Entity>> pendingEntities;
 
+	std::vector<uint8_t> REGION_BUFFER;
+
 	uint64_t GetChunkKey(int32_t cx, int32_t cz) const {
 		return (static_cast<uint64_t>(static_cast<uint32_t>(cx)) << 32 | static_cast<uint32_t>(cz));
 	}
 
 	void WakeNearbyWater(int bx, int by, int bz);
 
+	void InitRegionSkyLight();
 	void RebuildSkylightRegion(int32_t cx, int32_t cz);
 
 	
 	void MarkChunkMeshDirty(int32_t cx, int32_t cz);
 	void MarkChunkLightDirty(int32_t cx, int32_t cz, bool urgent);
+	void MarkChunkMeshDirtyByBlock(int bx, int by, int bz);
 	
 	void RebuildMeshQueue(int32_t curCx, int32_t curCz);
 	void GatherUnloadCandidates(int32_t curCx, int32_t curCz);
 
+	uint8_t GetSkylightGlobal(int bx, int by, int bz);
+	bool SetSkylightGlobal(int bx, int by, int bz, uint8_t light);
+	bool SetSkylightGlobalNoDirty(int bx, int by, int bz, uint8_t light);
+	bool IsTransparentGlobal(int bx, int by, int bz);
+
+	void PropagateSkylightAdd(int bx, int by, int bz);
+	void PropagateSkylightRemove(int bx, int by, int bz, uint8_t oldLight);
+
+	uint8_t ComputeSkyLightFromNeighbors(int bx, int by, int bz);
+
+
 	void ChunkGenerate(Chunk* c);
 
 	void ProcessGenQueue();
-	void ProcessLightQueue();
+	void ProcessUrgentLightQueue(int& lightBudged);
+	void ProcessNormalLightQueue(int& lightBudged);
 	void ProcessMeshQueue();
 	void ProcessGpuDeletes();
 	void ProcessUnloadQueue(int32_t curCx, int32_t curCz);
 	void ProcessWaterQueue();
+
+	bool ProcessOneGenJob();
+	bool ProcessOneUrgentLightJob();
+	bool ProcessOneNormalLightJob();
+	bool ProcessOneMeshJob();
 };
 
 extern World* gWorld;
