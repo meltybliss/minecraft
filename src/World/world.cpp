@@ -48,7 +48,7 @@ void World::InitRegionSkyLight() {
 }
 
 void World::Tick(float dt) {
-
+	
 	Vec3 pos = gGame->GetPlayer().getPos();
 	float chunkWorldSize = static_cast<float>(Chunk::CHUNK_WIDTH * blockSize);
 
@@ -113,25 +113,26 @@ void World::Tick(float dt) {
 	static int waterProcCount = 0;
 	waterProcCount++;
 
+	
 	int lightCommonBudged = 3;
 	if (!generationQueue.empty()) {
 		ProcessGenQueue();
 		ProcessUrgentLightQueue(lightCommonBudged);
-
+		//ProcessLightBoardersQueue();
 	
 	}
 	else {
 		
 		ProcessUrgentLightQueue(lightCommonBudged);
 		ProcessNormalLightQueue(lightCommonBudged);
-	
+		//ProcessLightBoardersQueue();
 		
 	}
 
 	ProcessMeshQueue();
 	ProcessUnloadQueue(curCx, curCz);
 	ProcessGpuDeletes();
-
+	
 	
 
 	if (waterProcCount >= 35) {
@@ -173,28 +174,32 @@ void World::render(GLuint program) {
 
 
 unsigned int World::GetBlockGlobal(int bx, int by, int bz) {
+	if (by < 0 || by >= Chunk::CHUNK_HEIGHT) {
+		return (unsigned int)BlockType::AIR;
+	}
+
 	int32_t cx = FloorDiv(bx, Chunk::CHUNK_WIDTH);
 	int32_t cz = FloorDiv(bz, Chunk::CHUNK_WIDTH);
 
 	uint64_t key = GetChunkKey(cx, cz);
 	auto it = Chunks.find(key);
-	if (it == Chunks.end()) return (unsigned int)BlockType::AIR;
+	if (it == Chunks.end() || !it->second) return (unsigned int)BlockType::AIR;
 
 	Chunk* c = it->second.get();
 
 	int lx = bx - cx * Chunk::CHUNK_WIDTH;
-	int ly = by;
 	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
-	return c->Get(lx, ly, lz);
+	return c->Get(lx, by, lz);
 }
+
 
 Chunk* World::GetChunkPtr(int cx, int cz) {
 	uint64_t key = GetChunkKey(cx, cz);
-	if (Chunks.find(key) == Chunks.end()) return nullptr;
-	return Chunks[key].get();
+	auto it = Chunks.find(key);
+	if (it == Chunks.end() || !it->second) return nullptr;
+	return it->second.get();
 }
-
 
 void World::MarkChunkMeshDirty(int32_t cx, int32_t cz) {
 	uint64_t key = GetChunkKey(cx, cz);
@@ -203,6 +208,9 @@ void World::MarkChunkMeshDirty(int32_t cx, int32_t cz) {
 	if (it == Chunks.end() || !it->second) return;
 	
 	std::shared_ptr<Chunk> c = it->second;
+
+	if (!c->isGenerated) return;
+
 	c->isMeshDirty = true;
 
 	if (!c->isQueuedForMesh) {
@@ -219,6 +227,9 @@ void World::MarkChunkLightDirty(int32_t cx, int32_t cz, bool urgent) {
 	if (it == Chunks.end() || !it->second) return;
 
 	std::shared_ptr<Chunk> c = it->second;
+
+	if (!c->isGenerated) return;
+
 	c->isLightDirty = true;
 
 	if (!c->isQueuedForLight) {
@@ -271,9 +282,7 @@ bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//
 	if (!ok) return false;
 
 	
-	//MarkChunkLightDirty(cx, cz, true);
 	MarkChunkMeshDirty(cx, cz);
-	
 	c->isEdited = true;
 
 	if (lx == 0) MarkChunkMeshDirty(cx - 1, cz);
@@ -281,12 +290,12 @@ bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//
 	if (lz == 0) MarkChunkMeshDirty(cx, cz - 1);
 	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkMeshDirty(cx, cz + 1);
 
-	if (block == 0) {
-		PropagateSkylightAdd(bx, by, bz);
-	}
-	else {
-		PropagateSkylightRemove(bx, by, bz, oldSky);
-	}
+
+	MarkChunkLightDirty(cx, cz, true);
+	if (lx == 0) MarkChunkLightDirty(cx - 1, cz, false);
+	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx + 1, cz, false);
+	if (lz == 0) MarkChunkLightDirty(cx, cz - 1, false);
+	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx, cz + 1, false);
 
 	return true;
 }
@@ -316,9 +325,7 @@ bool World::SetBlockGlobalForProgram(int bx, int by, int bz, unsigned int block)
 	if (!ok) return false;
 	
 
-	//MarkChunkLightDirty(cx, cz, true);
 	MarkChunkMeshDirty(cx, cz);
-	(cx, cz);
 	c->isEdited = true;
 
 	if (lx == 0) MarkChunkMeshDirty(cx - 1, cz);
@@ -326,12 +333,12 @@ bool World::SetBlockGlobalForProgram(int bx, int by, int bz, unsigned int block)
 	if (lz == 0) MarkChunkMeshDirty(cx, cz - 1);
 	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkMeshDirty(cx, cz + 1);
 
-	if (block == 0) {
-		PropagateSkylightAdd(bx, by, bz);
-	}
-	else {
-		PropagateSkylightRemove(bx, by, bz, oldSky);
-	}
+	
+	MarkChunkLightDirty(cx, cz, true);
+	if (lx == 0) MarkChunkLightDirty(cx - 1, cz, false);
+	if (lx == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx + 1, cz, false);
+	if (lz == 0) MarkChunkLightDirty(cx, cz - 1, false);
+	if (lz == Chunk::CHUNK_WIDTH - 1) MarkChunkLightDirty(cx, cz + 1, false);
 
 	return true;
 }
@@ -498,10 +505,9 @@ uint8_t World::ComputeSkyLightFromNeighbors(int bx, int by, int bz) {
 
 
 void World::PropagateSkylightAdd(int bx, int by, int bz) {
-
 	uint8_t startLight = ComputeSkyLightFromNeighbors(bx, by, bz);
 	uint8_t curLight = GetSkylightGlobal(bx, by, bz);
-	
+
 	if (startLight <= curLight) return;
 
 	SetSkylightGlobal(bx, by, bz, startLight);
@@ -509,14 +515,12 @@ void World::PropagateSkylightAdd(int bx, int by, int bz) {
 	std::queue<LightNode> q;
 	q.push({ bx, by, bz, startLight });
 
-	//right, left, front, back, down
 	const int dirs[5][3] = {
-		{1, 0, 0},
-		{-1, 0, 0},
-		{0, 0, 1},
-		{0, 0, -1},
-		{0, -1, 0},
-
+		{ 1, 0, 0 },
+		{-1, 0, 0 },
+		{ 0, 0, 1 },
+		{ 0, 0,-1 },
+		{ 0,-1, 0 },
 	};
 
 	while (!q.empty()) {
@@ -526,16 +530,16 @@ void World::PropagateSkylightAdd(int bx, int by, int bz) {
 		curLight = cur.skyLight;
 
 		for (auto& d : dirs) {
-			
-
 			int nx = cur.x + d[0];
 			int ny = cur.y + d[1];
 			int nz = cur.z + d[2];
 
+			if (ny < 0 || ny >= Chunk::CHUNK_HEIGHT) continue;
 			if (!IsTransparentGlobal(nx, ny, nz)) continue;
 
 			uint8_t oldLight = GetSkylightGlobal(nx, ny, nz);
 			uint8_t newLight = oldLight;
+
 			if (d[0] == 0 && d[1] == -1 && d[2] == 0 && curLight == 15) {
 				newLight = 15;
 			}
@@ -547,10 +551,15 @@ void World::PropagateSkylightAdd(int bx, int by, int bz) {
 					newLight = curLight - 1;
 				}
 				else if (b == (unsigned int)BlockType::Leave) {
+					if (curLight <= 3) continue;
 					newLight = curLight - 3;
 				}
 				else if (b == (unsigned int)BlockType::Water) {
+					if (curLight <= 2) continue;
 					newLight = curLight - 2;
+				}
+				else {
+					continue;
 				}
 			}
 
@@ -560,8 +569,76 @@ void World::PropagateSkylightAdd(int bx, int by, int bz) {
 			}
 		}
 	}
+}
 
 
+void World::PropagateSkylightAddNoDirty(int bx, int by, int bz, std::unordered_set<uint64_t>& dirtyChunks) {
+	uint8_t startLight = ComputeSkyLightFromNeighbors(bx, by, bz);
+	uint8_t curLight = GetSkylightGlobal(bx, by, bz);
+
+	if (startLight <= curLight) return;
+
+	SetSkylightGlobalNoDirty(bx, by, bz, startLight);
+	dirtyChunks.insert(GetChunkKey(FloorDiv(bx, Chunk::CHUNK_WIDTH), FloorDiv(bz, Chunk::CHUNK_WIDTH)));
+
+	std::queue<LightNode> q;
+	q.push({ bx, by, bz, startLight });
+
+	const int dirs[5][3] = {
+		{ 1, 0, 0 },
+		{-1, 0, 0 },
+		{ 0, 0, 1 },
+		{ 0, 0,-1 },
+		{ 0,-1, 0 },
+	};
+
+	while (!q.empty()) {
+		LightNode cur = q.front();
+		q.pop();
+
+		curLight = cur.skyLight;
+
+		for (auto& d : dirs) {
+			int nx = cur.x + d[0];
+			int ny = cur.y + d[1];
+			int nz = cur.z + d[2];
+
+			if (ny < 0 || ny >= Chunk::CHUNK_HEIGHT) continue;
+			if (!IsTransparentGlobal(nx, ny, nz)) continue;
+
+			uint8_t oldLight = GetSkylightGlobal(nx, ny, nz);
+			uint8_t newLight = oldLight;
+
+			if (d[0] == 0 && d[1] == -1 && d[2] == 0 && curLight == 15) {
+				newLight = 15;
+			}
+			else {
+				if (curLight <= 1) continue;
+
+				unsigned int b = GetBlockGlobal(nx, ny, nz);
+				if (b == 0) {
+					newLight = curLight - 1;
+				}
+				else if (b == (unsigned int)BlockType::Leave) {
+					if (curLight <= 3) continue;
+					newLight = curLight - 3;
+				}
+				else if (b == (unsigned int)BlockType::Water) {
+					if (curLight <= 2) continue;
+					newLight = curLight - 2;
+				}
+				else {
+					continue;
+				}
+			}
+
+			if (newLight > oldLight) {
+				SetSkylightGlobalNoDirty(nx, ny, nz, newLight);
+				dirtyChunks.insert(GetChunkKey(FloorDiv(nx, Chunk::CHUNK_WIDTH), FloorDiv(nz, Chunk::CHUNK_WIDTH)));
+				q.push({ nx, ny, nz, newLight });
+			}
+		}
+	}
 }
 
 
@@ -696,53 +773,63 @@ HitResult World::TraceRay(Ray& ray, float maxDist) {
 }
 
 
+uint8_t World::ComputeSkyAttenuation(unsigned int block) {
+	if (block == (unsigned int)BlockType::AIR)   return 1;
+	if (block == (unsigned int)BlockType::Leave) return 3;
+	if (block == (unsigned int)BlockType::Water) return 2;
+	return 255;
+}
+
 #pragma region WORLD_LIGHT_CALC_BUFFER
 
-void World::RebuildSkylightRegionFast(int32_t cx, int32_t cz) {
-	SkylightRegionCache cache;
-	cache.baseCx = cx - 1;
-	cache.baseCz = cz - 1;
+void World::RebuildChunkSkylightFast(int32_t cx, int32_t cz) {
+	Chunk* c = GetChunkPtr(cx, cz);
+	if (!c || !c->isGenerated) return;
 
-	// 3x3 chunk cache
-	for (int dx = 0; dx < 3; dx++) {
-		for (int dz = 0; dz < 3; dz++) {
-			cache.chunks[dx][dz] = GetChunkPtr(cache.baseCx + dx, cache.baseCz + dz);
-		}
-	}
+	constexpr int W = Chunk::CHUNK_WIDTH;
+	constexpr int H = Chunk::CHUNK_HEIGHT;
 
-	int startBx = (cx - 1) * Chunk::CHUNK_WIDTH;
-	int endBx = (cx + 2) * Chunk::CHUNK_WIDTH;
-	int startBz = (cz - 1) * Chunk::CHUNK_WIDTH;
-	int endBz = (cz + 2) * Chunk::CHUNK_WIDTH;
+	const int worldBaseX = cx * W;
+	const int worldBaseZ = cz * W;
 
-	// 1. skylight clear
-	for (int rx = 0; rx < 3; rx++) {
-		for (int rz = 0; rz < 3; rz++) {
-			Chunk* c = cache.chunks[rx][rz];
-			if (!c) continue;
-
-			for (int y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
-				for (int lz = 0; lz < Chunk::CHUNK_WIDTH; lz++) {
-					for (int lx = 0; lx < Chunk::CHUNK_WIDTH; lx++) {
-						int idx = Chunk::Index(lx, y, lz);
-						c->blocks[idx].skyLight = 0;
-					}
-				}
+	//Ç±ÇÃ chunk ÇæÇØ clear
+	for (int y = 0; y < H; y++) {
+		for (int z = 0; z < W; z++) {
+			for (int x = 0; x < W; x++) {
+				c->blocks[Chunk::Index(x, y, z)].skyLight = 0;
 			}
 		}
 	}
 
 	std::queue<LightNode> q;
 
-	// 2. top-down seed
-	for (int bx = startBx; bx < endBx; bx++) {
-		for (int bz = startBz; bz < endBz; bz++) {
-			for (int y = Chunk::CHUNK_HEIGHT - 1; y >= 0; y--) {
-				unsigned int block = cache.GetBlockId(bx, y, bz);
+	auto IsTransparentLocal = [&](unsigned int b) -> bool {
+		return b == (unsigned int)BlockType::AIR ||
+			b == (unsigned int)BlockType::Water ||
+			b == (unsigned int)BlockType::Leave;
+		};
 
-				if (block == 0) {
-					cache.SetSky(bx, y, bz, 15);
-					q.push({ bx, y, bz, 15 });
+	auto PushSeed = [&](int lx, int ly, int lz, uint8_t light) {
+		if (lx < 0 || lx >= W) return;
+		if (ly < 0 || ly >= H) return;
+		if (lz < 0 || lz >= W) return;
+		if (light == 0) return;
+
+		int idx = Chunk::Index(lx, ly, lz);
+		if (light <= c->blocks[idx].skyLight) return;
+
+		c->blocks[idx].skyLight = light;
+		q.push({ worldBaseX + lx, ly, worldBaseZ + lz, light });
+	};
+
+	// 2. top seed
+	for (int x = 0; x < W; x++) {
+		for (int z = 0; z < W; z++) {
+			for (int y = H - 1; y >= 0; y--) {
+				unsigned int b = c->Get(x, y, z);
+
+				if (b == (unsigned int)BlockType::AIR) {
+					PushSeed(x, y, z, 15);
 				}
 				else {
 					break;
@@ -751,7 +838,85 @@ void World::RebuildSkylightRegionFast(int32_t cx, int32_t cz) {
 		}
 	}
 
-	// 3. BFS
+	// 3. border seed
+	auto SeedFromLeft = [&]() {
+		Chunk* left = GetChunkPtr(cx - 1, cz);
+		if (!left || !left->isGenerated || left->isLightDirty) return;
+
+		for (int z = 0; z < W; z++) {
+			for (int y = 0; y < H; y++) {
+				unsigned int selfBlock = c->Get(0, y, z);
+				if (!IsTransparentLocal(selfBlock)) continue;
+
+				uint8_t neighborLight = left->blocks[Chunk::Index(W - 1, y, z)].skyLight;
+				uint8_t att = ComputeSkyAttenuation(selfBlock);
+
+				if (neighborLight <= att) continue;
+				PushSeed(0, y, z, static_cast<uint8_t>(neighborLight - att));
+			}
+		}
+	};
+
+	auto SeedFromRight = [&]() {
+		Chunk* right = GetChunkPtr(cx + 1, cz);
+		if (!right || !right->isGenerated || right->isLightDirty) return;
+
+		for (int z = 0; z < W; z++) {
+			for (int y = 0; y < H; y++) {
+				unsigned int selfBlock = c->Get(W - 1, y, z);
+				if (!IsTransparentLocal(selfBlock)) continue;
+
+				uint8_t neighborLight = right->blocks[Chunk::Index(0, y, z)].skyLight;
+				uint8_t att = ComputeSkyAttenuation(selfBlock);
+
+				if (neighborLight <= att) continue;
+				PushSeed(W - 1, y, z, static_cast<uint8_t>(neighborLight - att));
+			}
+		}
+		};
+
+	auto SeedFromFront = [&]() {
+		Chunk* front = GetChunkPtr(cx, cz - 1);
+		if (!front || !front->isGenerated || front->isLightDirty) return;
+
+		for (int x = 0; x < W; x++) {
+			for (int y = 0; y < H; y++) {
+				unsigned int selfBlock = c->Get(x, y, 0);
+				if (!IsTransparentLocal(selfBlock)) continue;
+
+				uint8_t neighborLight = front->blocks[Chunk::Index(x, y, W - 1)].skyLight;
+				uint8_t att = ComputeSkyAttenuation(selfBlock);
+
+				if (neighborLight <= att) continue;
+				PushSeed(x, y, 0, static_cast<uint8_t>(neighborLight - att));
+			}
+		}
+		};
+
+	auto SeedFromBack = [&]() {
+		Chunk* back = GetChunkPtr(cx, cz + 1);
+		if (!back || !back->isGenerated || back->isLightDirty) return;
+
+		for (int x = 0; x < W; x++) {
+			for (int y = 0; y < H; y++) {
+				unsigned int selfBlock = c->Get(x, y, W - 1);
+				if (!IsTransparentLocal(selfBlock)) continue;
+
+				uint8_t neighborLight = back->blocks[Chunk::Index(x, y, 0)].skyLight;
+				uint8_t att = ComputeSkyAttenuation(selfBlock);
+
+				if (neighborLight <= att) continue;
+				PushSeed(x, y, W - 1, static_cast<uint8_t>(neighborLight - att));
+			}
+		}
+		};
+
+	SeedFromLeft();
+	SeedFromRight();
+	SeedFromFront();
+	SeedFromBack();
+
+	// 4. BFS ÇÕÇ±ÇÃ chunk ÇÃíÜÇæÇØ
 	const int dirs[5][3] = {
 		{ 1, 0, 0 },
 		{-1, 0, 0 },
@@ -764,46 +929,89 @@ void World::RebuildSkylightRegionFast(int32_t cx, int32_t cz) {
 		LightNode cur = q.front();
 		q.pop();
 
+		int lx = cur.x - worldBaseX;
+		int ly = cur.y;
+		int lz = cur.z - worldBaseZ;
+
 		uint8_t curLight = cur.skyLight;
 		if (curLight == 0) continue;
 
 		for (const auto& d : dirs) {
-			int nx = cur.x + d[0];
-			int ny = cur.y + d[1];
-			int nz = cur.z + d[2];
+			int nx = lx + d[0];
+			int ny = ly + d[1];
+			int nz = lz + d[2];
 
-			if (nx < startBx || nx >= endBx) continue;
-			if (nz < startBz || nz >= endBz) continue;
-			if (ny < 0 || ny >= Chunk::CHUNK_HEIGHT) continue;
-			if (!cache.IsTransparent(nx, ny, nz)) continue;
+			if (nx < 0 || nx >= W) continue;
+			if (ny < 0 || ny >= H) continue;
+			if (nz < 0 || nz >= W) continue;
 
-			unsigned int nBlock = cache.GetBlockId(nx, ny, nz);
-			uint8_t oldLight = cache.GetSky(nx, ny, nz);
+			unsigned int nBlock = c->Get(nx, ny, nz);
+			if (!IsTransparentLocal(nBlock)) continue;
+
+			int nIdx = Chunk::Index(nx, ny, nz);
+			uint8_t oldLight = c->blocks[nIdx].skyLight;
 			uint8_t newLight = 0;
 
-			if (d[0] == 0 && d[1] == -1 && d[2] == 0 && curLight == 15) {
+			// ê^è„Ç©ÇÁê^â∫Ç÷ãÛãCÇæÇØÇÕ 15 à€éù
+			if (d[0] == 0 && d[1] == -1 && d[2] == 0 &&
+				curLight == 15 &&
+				nBlock == (unsigned int)BlockType::AIR) {
 				newLight = 15;
 			}
 			else {
-				uint8_t att = cache.ComputeAttenuation(nBlock);
+				uint8_t att = ComputeSkyAttenuation(nBlock);
 				if (curLight <= att) continue;
 				newLight = static_cast<uint8_t>(curLight - att);
 			}
 
 			if (newLight > oldLight) {
-				cache.SetSky(nx, ny, nz, newLight);
-				q.push({ nx, ny, nz, newLight });
+				c->blocks[nIdx].skyLight = newLight;
+				q.push({ worldBaseX + nx, ny, worldBaseZ + nz, newLight });
 			}
 		}
 	}
 
-	// 4. mark dirty once
-	for (int dx = -1; dx <= 1; dx++) {
-		for (int dz = -1; dz <= 1; dz++) {
-			Chunk* c = GetChunkPtr(cx + dx, cz + dz);
-			if (!c) continue;
-			c->isLightDirty = false;
-			MarkChunkMeshDirty(cx + dx, cz + dz);
+	c->isLightDirty = false;
+	c->isSkySeeded = true;
+
+	// é©ï™Ç∆ó◊ê⁄ mesh Çí£ÇËíºÇ∑
+	MarkChunkMeshDirty(cx, cz);
+	MarkChunkMeshDirty(cx - 1, cz);
+	MarkChunkMeshDirty(cx + 1, cz);
+	MarkChunkMeshDirty(cx, cz - 1);
+	MarkChunkMeshDirty(cx, cz + 1);
+}
+
+void World::TryConnectChunkBordersIfReady(int32_t cx, int32_t cz) {
+	Chunk* c = GetChunkPtr(cx, cz);
+	if (!c) return;
+	if (!c->isGenerated || !c->isSkySeeded) return;
+
+	if (!c->isConnectedToLeft) {
+		Chunk* left = GetChunkPtr(cx - 1, cz);
+		if (left && left->isGenerated && left->isSkySeeded) {
+			ConnectChunkLeftBoarder(cx, cz);
+		}
+	}
+
+	if (!c->isConnectedToRight) {
+		Chunk* right = GetChunkPtr(cx + 1, cz);
+		if (right && right->isGenerated && right->isSkySeeded) {
+			ConnectChunkRightBoarder(cx, cz);
+		}
+	}
+
+	if (!c->isConnectedToFront) {
+		Chunk* front = GetChunkPtr(cx, cz - 1);
+		if (front && front->isGenerated && front->isSkySeeded) {
+			ConnectChunkFrontBoarder(cx, cz);
+		}
+	}
+
+	if (!c->isConnectedToBack) {
+		Chunk* back = GetChunkPtr(cx, cz + 1);
+		if (back && back->isGenerated && back->isSkySeeded) {
+			ConnectChunkBackBoarder(cx, cz);
 		}
 	}
 }
@@ -811,7 +1019,6 @@ void World::RebuildSkylightRegionFast(int32_t cx, int32_t cz) {
 
 void World::SeedChunkSkylightTop(int32_t cx, int32_t cz) {
 	Chunk* c = GetChunkPtr(cx, cz);
-
 	if (!c) return;
 
 	int startBx = cx * Chunk::CHUNK_WIDTH;
@@ -819,30 +1026,23 @@ void World::SeedChunkSkylightTop(int32_t cx, int32_t cz) {
 
 	for (int x = 0; x < Chunk::CHUNK_WIDTH; x++) {
 		for (int z = 0; z < Chunk::CHUNK_WIDTH; z++) {
-
 			int bx = startBx + x;
 			int bz = startBz + z;
 
 			for (int y = Chunk::CHUNK_HEIGHT - 1; y >= 0; y--) {
 				unsigned int b = c->Get(x, y, z);
 
-				if (b == 15) {
-
-					SetSkylightGlobal(bx, y, bz, 15);
+				if (b == (unsigned int)BlockType::AIR) {
+					SetSkylightGlobalNoDirty(bx, y, bz, 15);
 				}
 				else {
 					break;
 				}
-				
 			}
-
 		}
-
 	}
 
 	c->isSkySeeded = true;
-
-
 }
 
 
@@ -852,7 +1052,7 @@ void World::EnqueueBoarderLight(int32_t cx, int32_t cz) {
 	uint64_t key = GetChunkKey(cx, cz);
 
 	auto it = Chunks.find(key);
-	if (it != Chunks.end() || !it->second) return;
+	if (it == Chunks.end() || !it->second) return;
 
 	Chunk* c = it->second.get();
 	if (!c->isGenerated || c->isQueuedForBorderLight) return;
@@ -871,7 +1071,9 @@ void World::ConnectChunkLeftBoarder(int32_t cx, int32_t cz) {
 
 	Chunk* left = GetChunkPtr(cx - 1, cz);
 	if (left && left->isGenerated && left->isSkySeeded) {
-
+		std::unordered_set<uint64_t> dirtyChunks;
+		int seeds = 0;
+		const int maxSeeds = 4;
 		for (int z = 0; z < Chunk::CHUNK_WIDTH; z++) {
 			for (int y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
 
@@ -884,9 +1086,21 @@ void World::ConnectChunkLeftBoarder(int32_t cx, int32_t cz) {
 				uint8_t leftLight = GetSkylightGlobal(bx - 1, y, bz);
 
 				if (leftLight > 1 && leftLight - 1 > curLight) {
-					PropagateSkylightAdd(bx, y, bz);
+					PropagateSkylightAddNoDirty(bx, y, bz, dirtyChunks);
+					seeds++;
+					if (seeds >= maxSeeds) break;
+					
 				}
 
+			}
+
+			if (seeds >= maxSeeds) break;
+		}
+
+		for (uint64_t key : dirtyChunks) {
+			auto it = Chunks.find(key);
+			if (it != Chunks.end() && it->second) {
+				MarkChunkMeshDirty(it->second->cx, it->second->cz);
 			}
 		}
 
@@ -910,6 +1124,11 @@ void World::ConnectChunkRightBoarder(int32_t cx, int32_t cz) {
 	Chunk* right = GetChunkPtr(cx + 1, cz);
 	if (right && right->isGenerated && right->isSkySeeded) {
 
+		std::unordered_set<uint64_t> dirtyChunks;
+		int seeds = 0;
+		const int maxSeeds = 4;
+
+
 		for (int z = 0; z < Chunk::CHUNK_WIDTH; z++) {
 			for (int y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
 				int bx = endBx;
@@ -921,8 +1140,19 @@ void World::ConnectChunkRightBoarder(int32_t cx, int32_t cz) {
 				uint8_t rightLight = GetSkylightGlobal(bx + 1, y, bz);
 
 				if (rightLight > 1 && rightLight - 1 > curLight) {
-					PropagateSkylightAdd(bx, y, bz);
+					PropagateSkylightAddNoDirty(bx, y, bz, dirtyChunks);
+					seeds++;
+					if (seeds >= maxSeeds) break;
 				}
+			}
+
+			if (seeds >= maxSeeds) break;
+		}
+
+		for (uint64_t key : dirtyChunks) {
+			auto it = Chunks.find(key);
+			if (it != Chunks.end() && it->second) {
+				MarkChunkMeshDirty(it->second->cx, it->second->cz);
 			}
 		}
 
@@ -943,6 +1173,12 @@ void World::ConnectChunkFrontBoarder(int32_t cx, int32_t cz) {
 
 	Chunk* front = GetChunkPtr(cx, cz - 1);
 	if (front && front->isGenerated && front->isSkySeeded) {
+
+		std::unordered_set<uint64_t> dirtyChunks;
+		int seeds = 0;
+		const int maxSeeds = 4;
+
+
 		for (int x = 0; x < Chunk::CHUNK_WIDTH; x++) {
 			for (int y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
 				int bx = startBx + x;
@@ -954,12 +1190,23 @@ void World::ConnectChunkFrontBoarder(int32_t cx, int32_t cz) {
 				uint8_t frontLight = GetSkylightGlobal(bx, y, bz - 1);
 
 				if (frontLight > 1 && frontLight - 1 > curLight) {
-					PropagateSkylightAdd(bx, y, bz);
+					PropagateSkylightAddNoDirty(bx, y, bz, dirtyChunks);
+					seeds++;
+					if (seeds >= maxSeeds) break;
 				}
 			}
+			if (seeds >= maxSeeds) break;
 		}
 
 		c->isConnectedToFront = true;
+
+		for (uint64_t key : dirtyChunks) {
+			auto it = Chunks.find(key);
+			if (it != Chunks.end() && it->second) {
+				MarkChunkMeshDirty(it->second->cx, it->second->cz);
+			}
+		}
+
 	}
 	else if (front && !front->isSkySeeded) {
 		EnqueueBoarderLight(front->cx, front->cz);
@@ -978,6 +1225,11 @@ void World::ConnectChunkBackBoarder(int32_t cx, int32_t cz) {
 
 	Chunk* back = GetChunkPtr(cx, cz + 1);
 	if (back && back->isGenerated && back->isSkySeeded) {
+
+		std::unordered_set<uint64_t> dirtyChunks;
+		int seeds = 0;
+		const int maxSeeds = 4;
+
 		for (int x = 0; x < Chunk::CHUNK_WIDTH; x++) {
 			for (int y = 0; y < Chunk::CHUNK_HEIGHT; y++) {
 				int bx = startBx + x;
@@ -989,8 +1241,20 @@ void World::ConnectChunkBackBoarder(int32_t cx, int32_t cz) {
 				uint8_t backLight = GetSkylightGlobal(bx, y, bz + 1);
 
 				if (backLight > 1 && backLight - 1 > curLight) {
-					PropagateSkylightAdd(bx, y, bz);
+					PropagateSkylightAddNoDirty(bx, y, bz, dirtyChunks);
+					seeds++;
+					if (seeds >= maxSeeds) break;
 				}
+			}
+			if (seeds >= maxSeeds) break;
+		
+		}
+
+
+		for (uint64_t key : dirtyChunks) {
+			auto it = Chunks.find(key);
+			if (it != Chunks.end() && it->second) {
+				MarkChunkMeshDirty(it->second->cx, it->second->cz);
 			}
 		}
 
@@ -1175,14 +1439,20 @@ void World::GatherUnloadCandidates(int32_t curCx, int32_t curCz) {
 }
 
 void World::ChunkGenerate(Chunk* c) {
-
 	terrainGen.Generate(c);
 	caveGen.ApplyCaves(c);
-	
-	SeedChunkSkylightTop(c->cx, c->cz);
-	ConnectChunkSkylightBorders(c->cz, c->cz);
 
-	MarkChunkMeshDirty(c->cx, c->cz);
+	c->isSkySeeded = false;
+	c->isLightDirty = true;
+	c->isMeshDirty = false;
+
+
+	MarkChunkLightDirty(c->cx, c->cz, false);
+
+	MarkChunkLightDirty(c->cx - 1, c->cz, false);
+	MarkChunkLightDirty(c->cx + 1, c->cz, false);
+	MarkChunkLightDirty(c->cx, c->cz - 1, false);
+	MarkChunkLightDirty(c->cx, c->cz + 1, false);
 }
 
 
@@ -1260,9 +1530,12 @@ void World::ProcessGenQueue() {
 
 		if (auto c = wp.lock()) {
 			
-			ChunkGenerate(c.get());
 
 			c->isGenerated = true;
+
+			ChunkGenerate(c.get());
+
+			
 			c->isQueuedForGen = false;
 			
 			
@@ -1274,7 +1547,7 @@ void World::ProcessGenQueue() {
 
 
 void World::ProcessLightBoardersQueue() {
-	int budget = 2;
+	int budget = 3;
 
 
 	while (budget > 0 && !boarderLightQueue.empty()) {
@@ -1295,10 +1568,10 @@ void World::ProcessLightBoardersQueue() {
 		int32_t cx = c->cx;
 		int32_t cz = c->cz;
 
-
 		c->isQueuedForBorderLight = false;
+		if (c->isAllConected()) continue;
 
-		if (!c->isConnectedToLeft) {
+		/*if (!c->isConnectedToLeft) {
 			Chunk* left = GetChunkPtr(cx - 1, cz);
 			if (left && left->isGenerated && left->isSkySeeded) {
 				left_ready = true;
@@ -1326,18 +1599,61 @@ void World::ProcessLightBoardersQueue() {
 			}
 		}
 
-		if (left_ready) ConnectChunkLeftBoarder(cx, cz);
-		if (right_ready) ConnectChunkRightBoarder(cx, cz);
-		if (front_ready) ConnectChunkFrontBoarder(cx, cz);
-		if (back_ready) ConnectChunkBackBoarder(cx, cz);
+		if (left_ready) {
+			std::cout << "connect left " << cx << "," << cz << "\n";
+			ConnectChunkLeftBoarder(cx, cz);
+		}
+		if (right_ready) {
+			std::cout << "connect right " << cx << "," << cz << "\n";
+			ConnectChunkRightBoarder(cx, cz);
+		}
+		if (front_ready) {
+			std::cout << "connect front " << cx << "," << cz << "\n";
+			ConnectChunkFrontBoarder(cx, cz);
+		}
+		if (back_ready) {
+			std::cout << "connect back " << cx << "," << cz << "\n";
+			ConnectChunkBackBoarder(cx, cz);
+		}*/
 
-		if (!(c->isConnectedToLeft && c->isConnectedToRight &&
-			c->isConnectedToFront && c->isConnectedToBack)) {
+		bool progressed = false;
 
-			EnqueueBoarderLight(cx, cz);
-
+		if (!c->isConnectedToLeft) {
+			Chunk* left = GetChunkPtr(cx - 1, cz);
+			if (left && left->isGenerated && left->isSkySeeded) {
+				std::cout << "connect left " << cx << "," << cz << "\n";
+				ConnectChunkLeftBoarder(cx, cz);
+				progressed = true;
+			}
+		}
+		else if (!c->isConnectedToRight) {
+			Chunk* right = GetChunkPtr(cx + 1, cz);
+			if (right && right->isGenerated && right->isSkySeeded) {
+				std::cout << "connect right " << cx << "," << cz << "\n";
+				ConnectChunkRightBoarder(cx, cz);
+				progressed = true;
+			}
+		}
+		else if (!c->isConnectedToFront) {
+			Chunk* front = GetChunkPtr(cx, cz - 1);
+			if (front && front->isGenerated && front->isSkySeeded) {
+				std::cout << "connect front " << cx << "," << cz << "\n";
+				ConnectChunkFrontBoarder(cx, cz);
+				progressed = true;
+			}
+		}
+		else if (!c->isConnectedToBack) {
+			Chunk* back = GetChunkPtr(cx, cz + 1);
+			if (back && back->isGenerated && back->isSkySeeded) {
+				std::cout << "connect back " << cx << "," << cz << "\n";
+				ConnectChunkBackBoarder(cx, cz);
+				progressed = true;
+			}
 		}
 
+		if (progressed && !c->isAllConected()) {
+			EnqueueBoarderLight(cx, cz);
+		}
 
 		budget--;
 
@@ -1358,14 +1674,12 @@ void World::ProcessUrgentLightQueue(int& lightBudged) {
 		std::shared_ptr<Chunk> c = it->second;
 
 		if (!c) continue;
+		if (!c->isGenerated) continue;
 
 		c->isQueuedForLight = false;
 		if (!c->isLightDirty) continue;
 
-
-		//c->RebuildSkyLight();
-		this->RebuildSkylightRegionFast(c->cx, c->cz);
-
+		RebuildChunkSkylightFast(c->cx, c->cz);
 
 		lightBudged--;
 
@@ -1387,13 +1701,12 @@ void World::ProcessNormalLightQueue(int& lightBudged) {
 		std::shared_ptr<Chunk> c = it->second;
 
 		if (!c) continue;
+		if (!c->isGenerated) continue;
 
 		c->isQueuedForLight = false;
 		if (!c->isLightDirty) continue;
 
-
-		//c->RebuildSkyLight();
-		this->RebuildSkylightRegionFast(c->cx, c->cz);
+		RebuildChunkSkylightFast(c->cx, c->cz);
 
 		lightBudged--;
 
@@ -1421,6 +1734,11 @@ void World::ProcessMeshQueue() {
 			deferred.push_back(c);
 			continue;
 		}
+
+		std::cout << "mesh try chunk " << c->cx << "," << c->cz
+			<< " meshDirty=" << c->isMeshDirty
+			<< " lightDirty=" << c->isLightDirty
+			<< "\n";
 
 		meshBuilder.BuildMesh(c.get());
 
@@ -1540,9 +1858,8 @@ bool World::ProcessOneGenJob() {
 	generationQueue.pop_front();
 
 	if (auto c = wp.lock()) {
-		ChunkGenerate(c.get());
-
 		c->isGenerated = true;
+		ChunkGenerate(c.get());
 		c->isQueuedForGen = false;
 		return true;
 	}
@@ -1565,7 +1882,7 @@ bool World::ProcessOneUrgentLightJob() {
 	c->isQueuedForLight = false;
 	if (!c->isLightDirty) return false;
 
-	RebuildSkylightRegionFast(c->cx, c->cz);
+	RebuildChunkSkylightFast(c->cx, c->cz);
 	return true;
 }
 
@@ -1584,7 +1901,7 @@ bool World::ProcessOneNormalLightJob() {
 	c->isQueuedForLight = false;
 	if (!c->isLightDirty) return false;
 
-	RebuildSkylightRegionFast(c->cx, c->cz);
+	RebuildChunkSkylightFast(c->cx, c->cz);
 	return true;
 }
 

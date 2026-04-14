@@ -4,7 +4,7 @@
 void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 	c->vertices.clear();
 	c->waterVertices.clear();
-
+	std::cout << "build mesh " << c->cx << "," << c->cz << "\n";
 
 	float s = static_cast<float>(blockSize);
 
@@ -218,6 +218,8 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 	if (c->vertices.empty() && c->waterVertices.empty()) {
 		c->vertexCount = 0;
 		c->waterVertexCount = 0;
+		c->isMeshDirty = false;
+		c->isEdited = false;
 		return;
 	}
 
@@ -263,6 +265,10 @@ void ChunkMeshBuilder::BuildMesh(Chunk* c) {
 
 
 	glBindVertexArray(0);
+
+	std::cout << "built mesh " << c->cx << "," << c->cz
+		<< " solid=" << c->vertexCount
+		<< " water=" << c->waterVertexCount << "\n";
 
 	c->isMeshDirty = false;
 	c->isEdited = false;

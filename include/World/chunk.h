@@ -71,6 +71,11 @@ struct Chunk {
 	int vertexCount = 0;
 	int waterVertexCount = 0;
 
+	bool isAllConected() {
+		return isConnectedToLeft && isConnectedToRight &&
+			isConnectedToFront && isConnectedToBack;
+	}
+
 	bool inRange(int x, int y, int z) const {
 		return 
 			x >= 0 && x < CHUNK_WIDTH &&

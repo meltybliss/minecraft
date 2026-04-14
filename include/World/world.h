@@ -12,6 +12,7 @@
 #include "Math/Mat4.h"
 #include <deque>
 #include <queue>
+#include <unordered_set>
 #include "Math/Vec2.h"
 #include "ChunkPriority.h"
 #include <climits>
@@ -95,8 +96,8 @@ private:
 	uint32_t worldSeed;
 	std::mt19937 TNTRng;
 
-	int RENDER_DISTANCE = 10;//30
-	int UNLOAD_DISTANCE = 14;//34
+	int RENDER_DISTANCE = 30;//30
+	int UNLOAD_DISTANCE = 34;//34
 
 	ChunkMeshBuilder meshBuilder;
 	TerrainGenerator terrainGen;
@@ -145,9 +146,11 @@ private:
 
 	void InitRegionSkyLight();
 	void RebuildSkylightRegion(int32_t cx, int32_t cz);
-	void RebuildSkylightRegionFast(int32_t cx, int32_t cz);
+	void RebuildChunkSkylightFast(int32_t cx, int32_t cz);
 
 	void SeedChunkSkylightTop(int32_t cx, int32_t cz);
+
+	uint8_t ComputeSkyAttenuation(unsigned int block);
 
 	void ConnectChunkSkylightBorders(int32_t cx, int32_t cz);
 	void ConnectChunkLeftBoarder(int32_t cx, int32_t cz);
@@ -170,9 +173,10 @@ private:
 
 	void PropagateSkylightAdd(int bx, int by, int bz);
 	void PropagateSkylightRemove(int bx, int by, int bz, uint8_t oldLight);
+	void PropagateSkylightAddNoDirty(int bx, int by, int bz, std::unordered_set<uint64_t>& dirtyChunks);
 
 	uint8_t ComputeSkyLightFromNeighbors(int bx, int by, int bz);
-
+	void TryConnectChunkBordersIfReady(int32_t cx, int32_t cz);
 
 	void ChunkGenerate(Chunk* c);
 
