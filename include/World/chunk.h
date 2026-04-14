@@ -37,10 +37,17 @@ struct Chunk {
 	bool isEdited = false;
 	bool isDirty = false;
 
+	bool isSkySeeded = false;
+	bool isConnectedToLeft = false;
+	bool isConnectedToRight = false;
+	bool isConnectedToFront = false;
+	bool isConnectedToBack = false;
+
 	bool isLightDirty = false;
 	bool isMeshDirty = false;
 
 	bool isQueuedForGen = false;
+	bool isQueuedForBorderLight = false;
 	bool isQueuedForLight = false;
 	bool isQueuedForMesh = false;
 	bool isQueuedForUnload = false;

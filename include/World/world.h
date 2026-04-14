@@ -108,6 +108,8 @@ private:
 	std::unordered_map<uint64_t, std::shared_ptr<Chunk>> Chunks;
 
 	std::deque<std::weak_ptr<Chunk>> generationQueue;
+
+	std::deque<uint64_t> boarderLightQueue;
 	
 	std::deque<uint64_t> urgentLightQueue;
 	std::deque<uint64_t> normalLightQueue;
@@ -137,13 +139,22 @@ private:
 		return (static_cast<uint64_t>(static_cast<uint32_t>(cx)) << 32 | static_cast<uint32_t>(cz));
 	}
 
+	void EnqueueBoarderLight(int32_t cx, int32_t cz);
+
 	void WakeNearbyWater(int bx, int by, int bz);
 
 	void InitRegionSkyLight();
 	void RebuildSkylightRegion(int32_t cx, int32_t cz);
 	void RebuildSkylightRegionFast(int32_t cx, int32_t cz);
 
-	
+	void SeedChunkSkylightTop(int32_t cx, int32_t cz);
+
+	void ConnectChunkSkylightBorders(int32_t cx, int32_t cz);
+	void ConnectChunkLeftBoarder(int32_t cx, int32_t cz);
+	void ConnectChunkRightBoarder(int32_t cx, int32_t cz);
+	void ConnectChunkFrontBoarder(int32_t cx, int32_t cz);
+	void ConnectChunkBackBoarder(int32_t cx, int32_t cz);
+
 	void MarkChunkMeshDirty(int32_t cx, int32_t cz);
 	void MarkChunkLightDirty(int32_t cx, int32_t cz, bool urgent);
 	void MarkChunkMeshDirtyByBlock(int bx, int by, int bz);
@@ -166,6 +177,7 @@ private:
 	void ChunkGenerate(Chunk* c);
 
 	void ProcessGenQueue();
+	void ProcessLightBoardersQueue();
 	void ProcessUrgentLightQueue(int& lightBudged);
 	void ProcessNormalLightQueue(int& lightBudged);
 	void ProcessMeshQueue();
