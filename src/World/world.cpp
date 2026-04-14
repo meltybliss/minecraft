@@ -261,10 +261,8 @@ bool World::SetBlockGlobalForPlr(int bx, int by, int bz, unsigned int block) {//
 	int ly = by;
 	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
-	uint8_t oldSky = GetSkylightGlobal(bx, by, bz);
-
 	if (block != 0) {
-		bool ok = c->isAirBlock(lx, ly, lz);
+		bool ok = c->isAirBlock(lx, ly, lz) || c->isWaterBlock(lx, ly, lz);
 
 		if (ok && block == (unsigned int)BlockType::Water) {
 			EnqueueWaterProc(bx, by, bz);
@@ -314,8 +312,6 @@ bool World::SetBlockGlobalForProgram(int bx, int by, int bz, unsigned int block)
 	int ly = by;
 	int lz = bz - cz * Chunk::CHUNK_WIDTH;
 
-
-	uint8_t oldSky = GetSkylightGlobal(bx, by, bz);
 
 	if (block == 0) {
 		WakeNearbyWater(bx, by, bz);
@@ -761,7 +757,8 @@ HitResult World::TraceRay(Ray& ray, float maxDist) {
 			hit.normal = { 0, 0, -(float)stepZ };
 		}
 
-		if (GetBlockGlobal(x, y, z) != (unsigned int)BlockType::AIR) {
+		unsigned int b = GetBlockGlobal(x, y, z);
+		if (b != (unsigned int)BlockType::AIR && b != (unsigned int)BlockType::Water) {
 			hit.isHit = true;
 			hit.hitPos = { (float)x, (float)y, (float)z }; // blockç¿ïWÇ≈ï‘Ç∑
 			hit.dist = t * blockSize;                      // worldãóó£Ç…ñﬂÇ∑
@@ -1356,10 +1353,6 @@ void World::ProcessMeshQueue() {
 			continue;
 		}
 
-		std::cout << "mesh try chunk " << c->cx << "," << c->cz
-			<< " meshDirty=" << c->isMeshDirty
-			<< " lightDirty=" << c->isLightDirty
-			<< "\n";
 
 		meshBuilder.BuildMesh(c.get());
 
