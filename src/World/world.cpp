@@ -14,7 +14,9 @@ static double GetTimeMs() {
 	).count();
 }
 
-World::World() : worldSeed(123456789u), meshQueue(ChunkPriority{ 0, 0 }), TNTRng(std::random_device{}()) {
+World::World() : worldSeed(123456789u), meshQueue(ChunkPriority{ 0, 0 }), TNTRng(std::random_device{}()),
+	chunkPool(300)
+{
 	gWorld = this;
 
 	for (int x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
@@ -66,8 +68,12 @@ void World::Tick(float dt) {
 		uint64_t key = GetChunkKey(x, z);
 		if (Chunks.find(key) == Chunks.end()) {
 
+			Chunk* raw = chunkPool.Allocate();
 
-			auto c = std::make_shared<Chunk>();
+			std::shared_ptr<Chunk> c(raw, [this](Chunk* p) {//warp with shared ptr
+				chunkPool.Release(p);
+			});
+			//auto c = std::make_shared<Chunk>();
 			c->cx = x;
 			c->cz = z;
 			c->chunkSeed = Chunk::makeChunkSeed(gWorld->getWorldSeed(), c->cx, c->cz);

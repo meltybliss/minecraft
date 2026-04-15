@@ -24,6 +24,7 @@
 #include "Entities/TNTEntity.h"
 #include "BlockPos.h"
 #include "WaterStruct.h"
+#include "ChunkPool.h"
 
 
 
@@ -98,6 +99,8 @@ private:
 
 	int RENDER_DISTANCE = 30;//30
 	int UNLOAD_DISTANCE = 34;//34
+
+	ChunkPool chunkPool;
 
 	ChunkMeshBuilder meshBuilder;
 	TerrainGenerator terrainGen;
