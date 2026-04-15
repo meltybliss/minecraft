@@ -89,4 +89,23 @@ public:
 
 	}
 
+	void Release(Chunk* p) {
+		if (!p) return;
+
+		p->~Chunk();
+
+		for (int bi = 0; bi < (int)blocks.size(); bi++) {
+			Chunk* begin = blocks[bi].baseAddr;
+			Chunk* end = blocks[bi].baseAddr + blocks[bi].capacity;
+
+			if (p >= begin && p < end) {//‘ÎÛ‚Ìpoolblock‚ª“Á’è‚Å‚«‚½‚Ì‚Åslotindex‚à“Á’è‰Â
+				int si = p - begin;
+				freelist.emplace_back(SlotRef{ bi, si });
+				return;
+			}
+
+		}
+
+	}
+
 };
