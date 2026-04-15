@@ -43,6 +43,12 @@ public:
 
 	}
 
+	~ChunkPool() {
+		for (const auto& b : blocks) {
+			::operator delete(b.baseAddr);
+		}
+	}
+
 	Chunk* Allocate() {
 		if (!freelist.empty()) {
 			SlotRef slot = freelist.back();
