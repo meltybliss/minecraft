@@ -16,7 +16,6 @@ struct SlotRef {
 
 class ChunkPool {
 
-	Chunk* baseAddr;
 	std::vector<PoolBlock> blocks;//chunk256ŒÂ‚Å1
 	std::vector<SlotRef> freelist;//chunk‚Ì”‚ ‚é
 
