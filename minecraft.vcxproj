@@ -180,6 +180,7 @@
     <ClInclude Include="include\World\CaveGenerator.h" />
     <ClInclude Include="include\World\CaveSeed.h" />
     <ClInclude Include="include\World\chunk.h" />
+    <ClInclude Include="include\World\ChunkPool.h" />
     <ClInclude Include="include\World\ChunkPriority.h" />
     <ClInclude Include="include\World\GetSurfaceHeight.h" />
     <ClInclude Include="include\World\SkyLightRegionCache.h" />
